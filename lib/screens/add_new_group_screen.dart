@@ -11,11 +11,11 @@ import '../models/chat.dart';
 class AddNewGroupScreen extends StatelessWidget {
   AddNewGroupScreen({super.key});
 
-  //this list containes the indices of the selected people 
+  //this list containes the indices of the selected people
   // for example if (selectedPeople = [2,3]) ==> then ==> contacts[2] ,contacts[3] are selected
 
   final selectedPeople = <int>[].obs;
-  var  contacts = <Rx<Chat>>[];
+  var contacts = <Rx<Chat>>[];
   @override
   Widget build(BuildContext context) {
     return Obx(
@@ -25,13 +25,10 @@ class AddNewGroupScreen extends StatelessWidget {
           onPressed: () {
             final selected = <Chat>[];
             for (var i = 0; i < selectedPeople.length; i++) {
-              
-              
-                selected.add(contacts[selectedPeople[i]].value);
-              
+              selected.add(contacts[selectedPeople[i]].value);
             }
 
-                Get.to(() => AddNewGroup2ndScreen(selectedPeople: selected));
+            Get.to(() => AddNewGroup2ndScreen(selectedPeople: selected));
           },
         ),
         appBar: AppBar(
@@ -54,7 +51,7 @@ class AddNewGroupScreen extends StatelessWidget {
         ),
         body: GetBuilder<Controller>(
           builder: (controller) {
-             contacts = controller.myChatsList.where((e) => e.value.isGroupChat ==false).toList();
+            contacts = controller.myChatsList.where((e) => e.value.isGroupChat == false).toList();
 
             return Column(
               children: [

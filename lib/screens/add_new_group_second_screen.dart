@@ -1,18 +1,53 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
+import 'package:chat_app/controllers/controller.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+
+import '../helpers/user_image_picker.dart';
 import '../models/chat.dart';
+import 'user_chats.dart';
 
 class AddNewGroup2ndScreen extends StatelessWidget {
-  const AddNewGroup2ndScreen({required this.selectedPeople, super.key});
+  AddNewGroup2ndScreen({required this.selectedPeople, super.key});
 
   final List<Chat> selectedPeople;
+
+  final _groubNameController = TextEditingController();
+  File? _userImageFile;
+
+  void _pickedImage(File image) {
+    _userImageFile = image;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.done),
-        onPressed: () {},
+        onPressed: () {
+          final groupName = _groubNameController.text.trim();
+          final List<String> selectedPeopleIds = [];
+
+          for (var person in selectedPeople) {
+            selectedPeopleIds.add(person.userId!);
+          }
+
+          if (groupName.isEmpty) {
+            Fluttertoast.showToast(
+                msg: "Enter the name of the group!",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.CENTER,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.grey[500],
+                textColor: Colors.white,
+                fontSize: 16.0);
+            return;
+          }
+          Get.find<Controller>().createGroupChat(groupName, selectedPeopleIds,_userImageFile);
+          Get.to(() => const UserChats());
+        },
       ),
       appBar: AppBar(
         title: const Text(
@@ -25,21 +60,29 @@ class AddNewGroup2ndScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(15),
             child: Row(
-              children: const [
-                CircleAvatar(
-                  radius: 25,
-                  backgroundColor: Colors.blue,
-                  child: Icon(
-                    Icons.camera_alt_outlined,
-                    color: Colors.white,
-                  ),
+              children: [
+                // const CircleAvatar(
+                //   radius: 25,
+                //   backgroundColor: Colors.blue,
+                //   child: Icon(
+                //     Icons.camera_alt_outlined,
+                //     color: Colors.white,
+                //   ),
+                // ),
+                UserImagePicker(
+                  icon: const Icon(Icons.camera_alt_outlined),
+                  radius: 30,
+                  isGroupImage: true,
+                  isImagefromGallery: false,
+                  imagePickFn: _pickedImage,
                 ),
-                SizedBox(
+                const SizedBox(
                   width: 15,
                 ),
                 Expanded(
                   child: TextField(
-                    decoration: InputDecoration(
+                    controller: _groubNameController,
+                    decoration: const InputDecoration(
                       hintText: 'Enter group name',
                     ),
                   ),

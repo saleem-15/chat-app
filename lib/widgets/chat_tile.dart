@@ -18,11 +18,13 @@ class ChatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isUser = userId != null ? true : false;
+
     return GetBuilder<Controller>(
       builder: (controller) {
         return FutureBuilder(
-          future: controller.getUserbyId(userId!),
-          builder: (BuildContext context, AsyncSnapshot<MyUser> snapshot) {
+          future: isUser ? controller.getUserbyId(userId!) : controller.getGroupChatbyId(chatId),
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
                 child: CircularProgressIndicator(),
@@ -33,11 +35,7 @@ class ChatTile extends StatelessWidget {
 
             return ListTile(
               onTap: () {
-                Get.to(() => ChatScreen(
-                      chatId: chatId,
-                      image:user.image,
-                      name:user.name
-                    ));
+                Get.to(() => ChatScreen(chatId: chatId, image: user.image, name: user.name));
               },
               leading: CircleAvatar(
                 radius: 25,

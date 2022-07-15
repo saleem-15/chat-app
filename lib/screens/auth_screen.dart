@@ -82,7 +82,7 @@ class AuthScreenState extends State<AuthScreen> {
           duration: const Duration(seconds: 7),
         ),
       );
-    }on PlatformException catch (error) {
+    } on PlatformException catch (error) {
       var msg = 'An error occured, please check your credentials!';
       setState(() {
         isLoading = false;
@@ -124,6 +124,7 @@ class AuthScreenState extends State<AuthScreen> {
   }
 }
 
+//************************************************************************ */
 class AuthForm extends StatefulWidget {
   const AuthForm(this.submitFn, this.isLoading, {super.key});
 
@@ -204,6 +205,9 @@ class _AuthFormState extends State<AuthForm> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   UserImagePicker(
+                    radius: 45,
+                    isGroupImage: false,
+                    isImagefromGallery: false,
                     imagePickFn: _pickedImage,
                   ),
                   TextFormField(

@@ -144,9 +144,9 @@ class FirebaseApi {
   static Future<List<Chat>> getMyChats() async {
     List<Chat> myChats = [];
     List<MyUser> myChatsList = [];
-    final chats = await db.collection('users').doc(myUid).get();
+    final myData = await db.collection('users').doc(myUid).get();
 
-    var myChatsIDs = chats['user_chats'] as List; //returns a list of chat id's (not user id's)
+    var myChatsIDs = myData['user_chats'] as List; //returns a list of chat id's (not user id's)
 
     for (String chatPath in myChatsIDs) {
       log('chat path: $chatPath');
@@ -179,6 +179,12 @@ class FirebaseApi {
 
         myChatsList.add(otherUser);
         log('user_chat ---> name: ${otherUser.name}/ uid: ${otherUser.uid}/ chatId: ${otherUser.chatId}');
+      } else {
+        //if group chat
+
+        final c = await getGroupData(chatId);
+
+        myChats.add(c);
       }
     }
 
@@ -200,9 +206,39 @@ class FirebaseApi {
     );
   }
 
+  static Future<Chat> getGroupData(String groupId) async {
+    final groupDoc = await db.collection('Group_chats').doc(groupId).get();
+
+    return Chat.group(name: groupDoc['group_name'], image: groupDoc['image'], chatId: groupId);
+  }
+
   static Future<String> getUsername() async {
     final x = await getUserbyId(myUid);
     return x.name;
+  }
+
+  static Stream<QuerySnapshot<Map<String, dynamic>>> messagesCollectionGroup()  {
+    return  db.collectionGroup('messages').snapshots();
+  }
+
+  static Future<String> createGroupChat(String groupName, List<String> membersIds, String imageUrl) async {
+    // create group chat document
+    final chat = await db.collection('Group_chats').add({
+      'group_name': groupName,
+      'image': imageUrl,
+      'members': [
+        myUid,
+        ...membersIds,
+      ],
+    });
+    //add the created group to the "user_chats" for all the members of the group
+    for (var id in membersIds) {
+      db.collection('users').doc(id).update({
+        "user_chats": FieldValue.arrayUnion([chat.path])
+      });
+    }
+
+    return chat.id;
   }
 
   // try {

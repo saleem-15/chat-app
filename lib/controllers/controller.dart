@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:chat_app/api/firebase_api.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 
 import '../models/chat.dart';
@@ -27,6 +30,7 @@ class Controller extends GetxController {
     return _username!;
   }
 
+//--------------------------------------------------------------------------
   Future<void> getMyChats() async {
     var chats = await FirebaseApi.getMyChats();
 
@@ -34,6 +38,8 @@ class Controller extends GetxController {
     for (var chat in chats) {
       myChatsList.add(chat.obs);
     }
+
+    update();
 
     //return [model.MyUser(name: 'saleem',chatId: '',image: '',uid: '')];
   }
@@ -52,7 +58,28 @@ class Controller extends GetxController {
     return;
   }
 
+  Future<void> createGroupChat(String groupName, List<String> membersIds, File? image) async {
+    final imageId = Timestamp.now().toString();
+
+    if (image != null) {
+      final imageRef = FirebaseStorage.instance.ref().child('chats').child('$imageId.jpg');
+
+      await imageRef.putFile(image).whenComplete(() => null);
+
+      final imageUrl = await imageRef.getDownloadURL();
+      final groupId = await FirebaseApi.createGroupChat(groupName, membersIds, imageUrl);
+    } else {
+      //
+    }
+
+    return;
+  }
+
   Future<MyUser> getUserbyId(String userID) async {
     return FirebaseApi.getUserbyId(userID);
+  }
+
+  Future<Chat> getGroupChatbyId(String groupId) async {
+    return await FirebaseApi.getGroupData(groupId);
   }
 }
