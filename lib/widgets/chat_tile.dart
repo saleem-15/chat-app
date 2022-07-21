@@ -7,13 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ChatTile extends StatelessWidget {
-  ChatTile({required this.chatId, required this.image, super.key});
+  ChatTile({required this.chatPath, required this.image, super.key});
 
-  ChatTile.user({required this.userId, required this.chatId, required this.image, super.key});
+  ChatTile.user({required this.userId, required this.chatPath, required this.image, super.key});
 
   // (In case of group chat) userId = null
   String? userId;
-  final String chatId;
+  final String chatPath;
   final String image;
 
   @override
@@ -23,7 +23,7 @@ class ChatTile extends StatelessWidget {
     return GetBuilder<Controller>(
       builder: (controller) {
         return FutureBuilder(
-          future: isUser ? controller.getUserbyId(userId!) : controller.getGroupChatbyId(chatId),
+          future: isUser ? controller.getUserbyId(userId!) : controller.getGroupChatbyId(chatPath),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
@@ -35,7 +35,7 @@ class ChatTile extends StatelessWidget {
 
             return ListTile(
               onTap: () {
-                Get.to(() => ChatScreen(chatId: chatId, image: user.image, name: user.name));
+                Get.to(() => ChatScreen(chatPath: chatPath, image: user.image, name: user.name));
               },
               leading: CircleAvatar(
                 radius: 25,

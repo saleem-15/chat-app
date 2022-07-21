@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../api/firebase_api.dart';
 import '../controllers/controller.dart';
-import '../models/user.dart' as model;
+import '../models/user.dart' ;
 
 class AddNewContactScreen extends StatefulWidget {
   const AddNewContactScreen({super.key});
@@ -18,7 +18,7 @@ class _AddNewContactScreenState extends State<AddNewContactScreen> {
   bool userExists = false;
   bool searchDone = false;
 
-  model.MyUser? foundUser;
+  MyUser? foundUser;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +55,7 @@ class _AddNewContactScreenState extends State<AddNewContactScreen> {
                         return; // if the user was not found
                       }
 
-                      Get.find<Controller>().addNewChat(foundUser!.uid);
+                      Get.find<Controller>().addNewContact(foundUser!);
                     },
                   ),
                   ElevatedButton(
@@ -67,7 +67,7 @@ class _AddNewContactScreenState extends State<AddNewContactScreen> {
                       userExists = user == null ? false : true;
 
                       if (user != null) {
-                        foundUser = model.MyUser(chatId: user.chatId, name: user.name, image: user.image, uid: user.uid);
+                        foundUser = MyUser(chatId: user.chatId, name: user.name, image: user.image, uid: user.uid);
                       }
 
                       setState(() {});

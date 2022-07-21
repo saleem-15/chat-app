@@ -1,22 +1,20 @@
-import 'dart:developer';
-
 import 'package:chat_app/controllers/controller.dart';
 import 'package:chat_app/screens/add_new_contact_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../dao/dao.dart';
 import '../screens/add_new_group_screen.dart';
+import '../screens/chat_settings.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
-    var name = ''.obs;
-    final username = Get.find<Controller>().getUsername().then((value) => name.value = value);
+    var name = Get.find<Controller>().myUser.name.obs;
     final email = Get.find<Controller>().email;
-    final image = Get.find<Controller>().user.image;
-
+    final image = Get.find<Controller>().myUser.image;
     return Drawer(
       backgroundColor: Colors.blue,
       child: Column(
@@ -102,7 +100,7 @@ class MyDrawer extends StatelessWidget {
                 ),
                 InkWell(
                   onTap: () {
-                    log('hi');
+                    Get.to(() => const ChatSettings());
                   },
                   child: Container(
                     padding: const EdgeInsets.only(
@@ -117,7 +115,7 @@ class MyDrawer extends StatelessWidget {
                         SizedBox(
                           width: 15,
                         ),
-                        Text('Settings'),
+                        Text('Chat Settings'),
                       ],
                     ),
                   ),

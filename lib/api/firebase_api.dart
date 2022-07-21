@@ -2,7 +2,9 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../models/chat.dart';
+import '../models/message.dart';
 import '../models/user.dart';
 
 class FirebaseApi {
@@ -19,10 +21,13 @@ class FirebaseApi {
     );
   }
 
-  static Stream<QuerySnapshot<Map<String, dynamic>>> getMessages(String chatID) {
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getMessages(String chatPath) {
+    final collectionName = chatPath.split('/')[0];
+    final docName = chatPath.split('/')[1];
+
     return db
-        .collection('chats')
-        .doc(chatID)
+        .collection(collectionName)
+        .doc(docName)
         .collection('messages')
         .orderBy(
           'createdAt',
@@ -45,14 +50,18 @@ class FirebaseApi {
     });
   }
 
-  static Future<DocumentReference<Map<String, dynamic>>> sendMessage(String msg, String chatID, String username, String userImage) async {
-    return await db.collection('chats').doc(chatID).collection('messages').add({
+  static Future<DocumentReference<Map<String, dynamic>>> sendMessage(String msg, String chatPath, String username, String userImage) async {
+    final x = await db.doc(chatPath).collection('messages').add({
       'text': msg,
       'createdAt': Timestamp.now(),
       'senderId': myUid,
       'senderName': username,
       'senderImage': userImage,
+      'type': 'text',
     });
+    log(' message is sent to firebase');
+
+    return x;
   }
 
   static Future<MyUser?> findUserByEmail(String userEmail) async {
@@ -85,6 +94,7 @@ class FirebaseApi {
   // }
 
   static Future<String> addNewContact(String contactUid) async {
+    /// returns chat id
     // create chat document
     final chat = await db.collection('chats').add({
       'members': [
@@ -103,10 +113,7 @@ class FirebaseApi {
       "user_chats": FieldValue.arrayUnion([chat.path])
     });
 
-    //////  addToUserChats(chat.path);
-
-    log('addToUserChats() UId of the new chat---->${chat.id}');
-    return chat.id;
+    return chat.path;
   }
 
   static Future<String?> getChatId(String contactUid) async {
@@ -173,8 +180,8 @@ class FirebaseApi {
           otherUser = await getUserbyId(firstUserID);
           otherUser.chatId = myChat.id;
         }
-        final c = Chat(chatId: otherUser.chatId!, image: otherUser.image, name: otherUser.name, userId: otherUser.uid);
-
+        final c = Chat(chatPath: chatPath, image: otherUser.image, name: otherUser.name, userId: otherUser.uid);
+        log(c.toString());
         myChats.add(c);
 
         myChatsList.add(otherUser);
@@ -209,7 +216,7 @@ class FirebaseApi {
   static Future<Chat> getGroupData(String groupId) async {
     final groupDoc = await db.collection('Group_chats').doc(groupId).get();
 
-    return Chat.group(name: groupDoc['group_name'], image: groupDoc['image'], chatId: groupId);
+    return Chat.group(name: groupDoc['group_name'], image: groupDoc['image'], chatPath: groupId);
   }
 
   static Future<String> getUsername() async {
@@ -217,8 +224,8 @@ class FirebaseApi {
     return x.name;
   }
 
-  static Stream<QuerySnapshot<Map<String, dynamic>>> messagesCollectionGroup()  {
-    return  db.collectionGroup('messages').snapshots();
+  static Stream<QuerySnapshot<Map<String, dynamic>>> messagesCollectionGroup() {
+    return db.collectionGroup('messages').snapshots();
   }
 
   static Future<String> createGroupChat(String groupName, List<String> membersIds, String imageUrl) async {
@@ -231,6 +238,7 @@ class FirebaseApi {
         ...membersIds,
       ],
     });
+    log(chat.path);
     //add the created group to the "user_chats" for all the members of the group
     for (var id in membersIds) {
       db.collection('users').doc(id).update({
@@ -238,20 +246,62 @@ class FirebaseApi {
       });
     }
 
-    return chat.id;
+    return chat.path;
   }
 
-  // try {
-  //   log(myChats[0]);
-  // } on FirebaseException catch (e) {
-  //   print(e.stackTrace);
-  // }
+  static Future<void> sendPhoto(Message imageMessage, String senderName, String senderImage) async {
+    final imageFileId = imageMessage.image!.hashCode + DateTime.now().hashCode;
 
-  // db.collection('users').doc(myUid).get().then((querySnapshot) => {
-  //       // querySnapshot.forEach((doc) => {
-  //       //     log(`${doc.id} => ${doc.data()}`);
+    final imageRef = FirebaseStorage.instance.ref().child('chats/${imageMessage.chatPath}/$imageFileId.jpg');
 
-  //       // }
-  //       log('${querySnapshot.metadata}')
-  //     });
+    await imageRef.putFile(imageMessage.image!).whenComplete(() => null);
+    final imageUrl = await imageRef.getDownloadURL();
+
+    db.doc(imageMessage.chatPath).collection('messages').add({
+      'type': 'image',
+      'image': imageUrl,
+      'text': imageMessage.text,
+      'createdAt': Timestamp.now(),
+      'senderId': myUid,
+      'senderName': senderName,
+      'senderImage': senderImage,
+    });
+  }
+
+  static void sendVideo(Message videoMessage, String senderName, String senderImage) async {
+    final videoFileId = videoMessage.video!.hashCode + DateTime.now().hashCode;
+
+    final videoRef = FirebaseStorage.instance.ref().child('chats/${videoMessage.chatPath}/$videoFileId');
+
+    await videoRef.putFile(videoMessage.video!).whenComplete(() => null);
+    final videoUrl = await videoRef.getDownloadURL();
+
+    db.doc(videoMessage.chatPath).collection('messages').add({
+      'type': 'video',
+      'video': videoUrl,
+      'text': videoMessage.text,
+      'createdAt': Timestamp.now(),
+      'senderId': myUid,
+      'senderName': senderName,
+      'senderImage': senderImage,
+    });
+  }
+
+  static void sendAudio(Message audioMessage, String senderName, String senderImage) async {
+    final audioFileId = audioMessage.audio!.hashCode + DateTime.now().hashCode;
+    final audioRef = FirebaseStorage.instance.ref().child('chats/${audioMessage.chatPath}').child('$audioFileId');
+
+    await audioRef.putFile(audioMessage.audio!).whenComplete(() => null);
+    final audioUrl = await audioRef.getDownloadURL();
+
+    db.doc(audioMessage.chatPath).collection('messages').add({
+      'type': 'audio',
+      'audio': audioUrl,
+      'text': audioMessage.text,
+      'createdAt': Timestamp.now(),
+      'senderId': myUid,
+      'senderName': senderName,
+      'senderImage': senderImage,
+    });
+  }
 }

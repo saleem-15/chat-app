@@ -1,28 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get/get.dart';
+
+import '../dao/dao.dart';
+
+enum ChatBacground {
+  color,
+  image,
+}
 
 class MessageBubbleSettings {
-  static int _fontSize = 0;
+  static RxInt fontSize = Dao.getMessageFontSize().obs;
+  static final RxString _chatBackgroundImage = Dao.getChatBackground().obs;
+  static final _backgroundType = Dao.getBackgroundType().obs;
 
-  static Future<int> getFontSize() async {
-    if (_fontSize != 0) {
-      return _fontSize; //if the value of fontsize is initializes
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-
-    _fontSize = prefs.getInt('message_font_size') ?? 16;
-
-    return _fontSize;
-  }
+  static List<String> backgroundImages = [
+    'assets/chat_background_light.png',
+    'assets/chat_background_black.jpg',
+    'assets/chat_background_dark_blue.png',
+  ];
 
   static setFontSize(int newValue) async {
-    _fontSize = newValue;
-    final prefs = await SharedPreferences.getInstance();
-
-    prefs.setInt('message_font_size', newValue);
+    fontSize.value = newValue;
+    Dao.setMessageFontSize(newValue);
   }
 
-  static Color myMessageColor = Colors.green;
-  static Color othersMessageColor = Colors.blue;
+  static Rx<ChatBacground> get backgroundType => _backgroundType;
+
+  static setchatBackgroundType(ChatBacground type) async {
+    _backgroundType.value = type;
+    Dao.setBackgroundType(type);
+  }
+
+  static RxString get chatBackgroundImage => _chatBackgroundImage;
+
+  static setchatBackgroundImage(String imagePath) async {
+    chatBackgroundImage.value = imagePath;
+    Dao.setBackgroundType(ChatBacground.image);
+    Dao.setChatBackground(imagePath);
+  }
+
+  static Color myMessageColor = Colors.blue;
+  // Color(0xff2176FF);
+  //Colors.green;
+  static Color othersMessageColor = Colors.white;
 }
