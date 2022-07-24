@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,12 +23,8 @@ class FirebaseApi {
   }
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> getMessages(String chatPath) {
-    final collectionName = chatPath.split('/')[0];
-    final docName = chatPath.split('/')[1];
-
     return db
-        .collection(collectionName)
-        .doc(docName)
+        .doc(chatPath)
         .collection('messages')
         .orderBy(
           'createdAt',
@@ -50,10 +47,10 @@ class FirebaseApi {
     });
   }
 
-  static Future<DocumentReference<Map<String, dynamic>>> sendMessage(String msg, String chatPath, String username, String userImage) async {
+  static Future<DocumentReference<Map<String, dynamic>>> sendMessage(String msg, String chatPath, String username, String userImage, Timestamp timeSent) async {
     final x = await db.doc(chatPath).collection('messages').add({
       'text': msg,
-      'createdAt': Timestamp.now(),
+      'createdAt': timeSent,
       'senderId': myUid,
       'senderName': username,
       'senderImage': userImage,
@@ -254,7 +251,7 @@ class FirebaseApi {
 
     final imageRef = FirebaseStorage.instance.ref().child('chats/${imageMessage.chatPath}/$imageFileId.jpg');
 
-    await imageRef.putFile(imageMessage.image!).whenComplete(() => null);
+    await imageRef.putFile(File(imageMessage.image!)).whenComplete(() => null);
     final imageUrl = await imageRef.getDownloadURL();
 
     db.doc(imageMessage.chatPath).collection('messages').add({
@@ -273,7 +270,7 @@ class FirebaseApi {
 
     final videoRef = FirebaseStorage.instance.ref().child('chats/${videoMessage.chatPath}/$videoFileId');
 
-    await videoRef.putFile(videoMessage.video!).whenComplete(() => null);
+    await videoRef.putFile(File(videoMessage.video!)).whenComplete(() => null);
     final videoUrl = await videoRef.getDownloadURL();
 
     db.doc(videoMessage.chatPath).collection('messages').add({
@@ -291,7 +288,7 @@ class FirebaseApi {
     final audioFileId = audioMessage.audio!.hashCode + DateTime.now().hashCode;
     final audioRef = FirebaseStorage.instance.ref().child('chats/${audioMessage.chatPath}').child('$audioFileId');
 
-    await audioRef.putFile(audioMessage.audio!).whenComplete(() => null);
+    await audioRef.putFile(File(audioMessage.audio!)).whenComplete(() => null);
     final audioUrl = await audioRef.getDownloadURL();
 
     db.doc(audioMessage.chatPath).collection('messages').add({
@@ -302,6 +299,19 @@ class FirebaseApi {
       'senderId': myUid,
       'senderName': senderName,
       'senderImage': senderImage,
+    });
+  }
+
+  static Future<Timestamp> getLastTimeOnline(String userId) async {
+    final user = await db.collection('users').doc(userId).get();
+   
+
+    return user['last_online'];
+  }
+
+  static void sendToServerThatIamOnline() {
+    db.collection('users').doc(myUid).update({
+      'last_online': FieldValue.serverTimestamp(),
     });
   }
 }

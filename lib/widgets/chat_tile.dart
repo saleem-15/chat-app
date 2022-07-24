@@ -1,5 +1,7 @@
 // ignore_for_file: must_be_immutable
 
+import 'dart:io';
+
 import 'package:chat_app/controllers/controller.dart';
 import 'package:chat_app/models/user.dart';
 import 'package:chat_app/screens/chat_screen.dart';
@@ -7,9 +9,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ChatTile extends StatelessWidget {
-  ChatTile({required this.chatPath, required this.image, super.key});
+  ChatTile({
+    required this.chatPath,
+    required this.image,
+    super.key,
+  });
 
-  ChatTile.user({required this.userId, required this.chatPath, required this.image, super.key});
+  ChatTile.user({
+    required this.userId,
+    required this.chatPath,
+    required this.image,
+    super.key,
+  });
 
   // (In case of group chat) userId = null
   String? userId;
@@ -23,23 +34,23 @@ class ChatTile extends StatelessWidget {
     return GetBuilder<Controller>(
       builder: (controller) {
         return FutureBuilder(
-          future: isUser ? controller.getUserbyId(userId!) : controller.getGroupChatbyId(chatPath),
+          future: isUser ? controller.getUserbyIdFromBackend(userId!) : controller.getGroupChatbyId(chatPath),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
+            ///
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
                 child: CircularProgressIndicator(),
               );
             }
-
             final user = snapshot.data ?? MyUser(name: 'saleem', image: '', uid: '');
 
             return ListTile(
               onTap: () {
-                Get.to(() => ChatScreen(chatPath: chatPath, image: user.image, name: user.name));
+                Get.to(() => ChatScreen(chatPath: chatPath, image: image, name: user.name, userId: userId));
               },
               leading: CircleAvatar(
                 radius: 25,
-                backgroundImage: NetworkImage(image),
+                backgroundImage: FileImage(File(image)),
               ),
               title: Text(
                 user.name,
@@ -58,7 +69,59 @@ class ChatTile extends StatelessWidget {
                   ),
                 ),
               ),
-              subtitle: const Text('this is last message'),
+              // subtitle: Obx(() {
+              //   final chat = Get.find<Controller>().myChatsList.firstWhere((chat) => chat.value.chatPath == chatPath);
+              //   log('messages: ${chat.value.messages.length}');
+              //   final lastMessage = chat.value.messages[chat.value.messages.length];
+              //   switch (lastMessage.type) {
+              //     case MessageType.text:
+              //       return Text(lastMessage.text!);
+
+              //     case MessageType.photo:
+              //       return Row(
+              //         children: const [
+              //           Icon(
+              //             Icons.photo,
+              //             size: 10,
+              //           ),
+              //           Text('Photo'),
+              //         ],
+              //       );
+
+              //     case MessageType.video:
+              //       return Row(
+              //         children: const [
+              //           FaIcon(
+              //             FontAwesomeIcons.video,
+              //             size: 10,
+              //           ),
+              //           Text('Video'),
+              //         ],
+              //       );
+
+              //     case MessageType.audio:
+              //       return Row(
+              //         children: const [
+              //           Icon(
+              //             Icons.mic,
+              //             size: 10,
+              //           ),
+              //           Text('Audio'),
+              //         ],
+              //       );
+
+              //     default:
+              //       return Row(
+              //         children: const [
+              //           FaIcon(
+              //             FontAwesomeIcons.solidFile,
+              //             size: 10,
+              //           ),
+              //           Text('File'),
+              //         ],
+              //       );
+              //   }
+              // }),
             );
           },
         );

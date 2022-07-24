@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:sliver_header_delegate/sliver_header_delegate.dart';
 
@@ -57,8 +59,8 @@ class UserDetailsScreen extends StatelessWidget {
               //> 40 ? 40 : MediaQuery.of(context).padding.top,
               expandedHeight: 240,
               background: MutableBackground(
-                expandedWidget: Image.network(
-                  image,
+                expandedWidget: Image.file(
+                  File(image),
                   fit: BoxFit.cover,
                 ),
                 collapsedColor: Colors.blue,

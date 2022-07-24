@@ -1,9 +1,10 @@
+import 'dart:io';
+
 import 'package:chat_app/controllers/controller.dart';
 import 'package:chat_app/screens/add_new_contact_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../dao/dao.dart';
 import '../screens/add_new_group_screen.dart';
 import '../screens/chat_settings.dart';
 
@@ -13,7 +14,6 @@ class MyDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var name = Get.find<Controller>().myUser.name.obs;
-    final email = Get.find<Controller>().email;
     final image = Get.find<Controller>().myUser.image;
     return Drawer(
       backgroundColor: Colors.blue,
@@ -29,7 +29,7 @@ class MyDrawer extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 25,
-                      backgroundImage: NetworkImage(image),
+                      backgroundImage: FileImage(File(image)),
                     ),
                     IconButton(
                       icon: const Icon(Icons.nightlight_outlined),

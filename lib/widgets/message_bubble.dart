@@ -1,4 +1,4 @@
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:get/get.dart';
 
 import '../helpers/message_bubble_settings.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +24,11 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final messageMaxWidth = MediaQuery.of(context).size.width - 40;
+    final List<bool> c = _calcLastLineEnd(context, messageMaxWidth, textMessage);
+    final Rx<bool> isNeedPAdding = c[0].obs;
+    final Rx<bool> isNeedNewLine = c[1].obs;
+
     var fontSize = MessageBubbleSettings.fontSize;
     return Row(
       mainAxisAlignment: isMyMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
@@ -35,7 +40,7 @@ class MessageBubble extends StatelessWidget {
             bottom: 5,
             top: 3,
           ),
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width - 40),
+          constraints: BoxConstraints(maxWidth: messageMaxWidth),
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
           decoration: BoxDecoration(
             boxShadow: [
@@ -43,7 +48,7 @@ class MessageBubble extends StatelessWidget {
                 color: const Color.fromARGB(255, 199, 197, 197).withOpacity(0.8),
                 spreadRadius: 1,
                 blurRadius: 2,
-                offset: const Offset(0, 2), // changes position of shadow
+                offset: const Offset(0, 1), // changes position of shadow
               ),
             ],
             borderRadius: BorderRadius.only(
@@ -67,22 +72,25 @@ class MessageBubble extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: 5,
-                      right: 55,
-                    ),
-                    child: Obx(
-                      () => Text(
+                  Obx(
+                    () => Padding(
+                      padding: EdgeInsets.only(
+                        bottom: isNeedNewLine.value ? 20 : 0,
+                        right: isNeedPAdding.value ? 60 : 0,
+                      ),
+                      child: Text(
                         textMessage,
-                        style: TextStyle(fontSize: fontSize.value.toDouble()),
+                        style: TextStyle(
+                          fontSize: fontSize.value.toDouble(),
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
               Positioned(
-                bottom: 0,
+                bottom: -3,
                 right: 0,
                 child: Text(
                   timeSent,
@@ -94,133 +102,23 @@ class MessageBubble extends StatelessWidget {
         ),
       ],
     );
-
-    // Stack(
-    //   clipBehavior: Clip.none,
-    //   children: [
-    //     if (!isMyMessage && !isSequenceOfMessages) // if the message is not mine  AND this is the first messagge in the sequence
-    //       Positioned(
-    //         top: -15,
-    //         left: 5,
-    //         child: CircleAvatar(
-    //           radius: 22,
-    //           backgroundImage: NetworkImage(userImage, scale: .5),
-    //         ),
-    //       ),
-    //     Row(
-    //       mainAxisAlignment: isMyMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
-    //       children: [
-    //         const SizedBox(
-    //           width: 20,
-    //         ),
-    //         ConstrainedBox(
-    //           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width - 40),
-    //           child: Container(
-    //             // the message
-    //             margin: const EdgeInsets.symmetric(
-    //               vertical: 5,
-    //               horizontal: 7,
-    //             ),
-    //             padding: const EdgeInsets.all(10),
-    //             decoration: BoxDecoration(
-    //               borderRadius: BorderRadius.only(
-    //                 topRight: isMyMessage ? Radius.zero : const Radius.circular(20),
-    //                 topLeft: isMyMessage ? const Radius.circular(20) : Radius.zero,
-    //                 bottomRight: const Radius.circular(20),
-    //                 bottomLeft: const Radius.circular(20),
-    //               ),
-    //               color: messageColor ?? (isMyMessage ? MessageBubbleSettings.myMessageColor : MessageBubbleSettings.othersMessageColor),
-    //             ),
-    //             child: Column(
-    //               crossAxisAlignment: isMyMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-    //               children: [
-    //                 if (!isMyMessage)
-    //                   Text(
-    //                     // UserName
-    //                     username,
-    //                     style: const TextStyle(fontWeight: FontWeight.bold),
-    //                   ),
-    //                 FittedBox(
-    //                   fit: BoxFit.contain,
-    //                   child: Row(
-    //                     children: [
-    //                       Text(
-    //                         //message Text
-    //                         textMessage,
-    //                         style: TextStyle(fontSize: fontSize),
-    //                       ),
-    //                       Align(
-    //                         alignment: Alignment.bottomRight,
-    //                         child: Padding(
-    //                           //Time Sent
-    //                           padding: const EdgeInsets.only(left: 15, top: 10),
-    //                           child: Text(
-    //                             timeSent,
-    //                             style: const TextStyle(fontSize: 12),
-    //                           ),
-    //                         ),
-    //                       ),
-    //                     ],
-    //                   ),
-    //                 ),
-    //               ],
-    //             ),
-    //           ),
-    //         ),
-    //       ],
-    //     ),
-    //   ],
-    // );
   }
 
-  // Widget bubble() {
-  //   return Container(
-  //     child: Column(
-  //       children: [
-  //         Row(
-  //           children: const [
-  //             Text('saleem mahdi'),
-  //           ],
-  //           Container()
-  //         )
-  //       ],
-  //     ),
-  //   );
-  // }
+  List<bool> _calcLastLineEnd(BuildContext context, double maxWidth, String msg) {
+    // self-defined constraint
+    final constraints = BoxConstraints(
+      maxWidth: maxWidth, // maxwidth calculated
+      minHeight: 30.0,
+      minWidth: 80.0,
+    );
+    final richTextWidget = Text.rich(TextSpan(text: msg)).build(context) as RichText;
+    final renderObject = richTextWidget.createRenderObject(context);
+    renderObject.layout(constraints);
+    final boxes = renderObject.getBoxesForSelection(TextSelection(baseOffset: 0, extentOffset: TextSpan(text: msg).toPlainText().length));
+    bool needPadding = false, needNextline = false;
+    if (boxes.length < 2 && boxes.last.right < 630) needPadding = true;
+    if (boxes.length < 2 && boxes.last.right > 630) needNextline = true;
+    if (boxes.length > 1 && boxes.last.right > 630) needNextline = true;
+    return [needPadding, needNextline];
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-///--------------------------------------------------------------------------------
-// import 'package:flutter/material.dart';
-
-// class MessageBubble extends StatelessWidget {
-//   const MessageBubble({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       margin: const EdgeInsets.symmetric(vertical: 7, horizontal: 10),
-//       color: Colors.blue,
-//       child: Column(
-//         children: [
-//           Row(
-//             children: const [
-//               Text('saleem'),
-//             ],
-//           ),
-//           const Text('hello this is a message that containes some text '),
-//         ],
-//       ),
-//     );
-//   }
-// }

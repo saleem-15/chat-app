@@ -12,6 +12,7 @@ class MessageBubbleSettings {
   static RxInt fontSize = Dao.getMessageFontSize().obs;
   static final RxString _chatBackgroundImage = Dao.getChatBackground().obs;
   static final _backgroundType = Dao.getBackgroundType().obs;
+  static final Rx<Color> chatBackgroundColor = Dao.getChatBackgroundColor().obs;
 
   static List<String> backgroundImages = [
     'assets/chat_background_light.png',
@@ -37,6 +38,12 @@ class MessageBubbleSettings {
     chatBackgroundImage.value = imagePath;
     Dao.setBackgroundType(ChatBacground.image);
     Dao.setChatBackground(imagePath);
+  }
+
+  static setchatBackgroundColor(Color color) async {
+    chatBackgroundColor.value = color;
+    Dao.setBackgroundType(ChatBacground.color);
+    Dao.setChatBackgroundColor(color);
   }
 
   static Color myMessageColor = Colors.blue;

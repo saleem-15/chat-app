@@ -3,19 +3,27 @@
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:chat_app/controllers/controller.dart';
-import 'package:chat_app/models/message.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'package:chat_app/controllers/controller.dart';
+import 'package:chat_app/models/message.dart';
+
+import '../models/message_type.dart';
 import '../screens/picked_photo_viewer.dart';
+import '../screens/picked_video_viewer.dart';
 
 class ChatTextField extends StatefulWidget {
-  const ChatTextField({required this.chatPath, super.key});
+  const ChatTextField({
+    Key? key,
+    required this.chatPath,
+  }) : super(key: key);
+
   final String chatPath;
 
   @override
@@ -25,22 +33,24 @@ class ChatTextField extends StatefulWidget {
 class _ChatTextFieldState extends State<ChatTextField> {
   final recorder = FlutterSoundRecorder();
 
+  final myID = Get.find<Controller>().myUser.uid;
+
   bool isRecordingReady = false;
   final _textController = TextEditingController();
   var text = ''.obs;
 
   void sendAudio(File audioFile) {
-    final msg = Message.audio(chatPath: widget.chatPath, audio: audioFile);
+    final msg = Message.audio(chatPath: widget.chatPath, audio: audioFile.path, senderId: myID);
     Get.find<Controller>().sendAudio(msg);
   }
 
   void sendImage(File image, String? message) {
-    final imageMessage = Message.image(chatPath: widget.chatPath, text: message, type: MessageType.photo, image: image);
+    final imageMessage = Message.image(chatPath: widget.chatPath, text: message, type: MessageType.photo, image: image.path, senderId: myID);
     Get.find<Controller>().sendPhoto(imageMessage);
   }
 
   void sendVideo(File video, String? message) {
-    final videoMessage = Message.video(chatPath: widget.chatPath, text: message, type: MessageType.photo, video: video);
+    final videoMessage = Message.video(chatPath: widget.chatPath, text: message, type: MessageType.video, video: video.path, senderId: myID);
     Get.find<Controller>().sendVideo(videoMessage);
   }
 
@@ -86,15 +96,9 @@ class _ChatTextFieldState extends State<ChatTextField> {
                           if (!recorder.isRecording)
                             IconButton(
                               color: Theme.of(context).primaryColor,
-                              icon: const Icon(Icons.add),
+                              icon: const FaIcon(FontAwesomeIcons.paperclip, size: 20),
                               onPressed: () async {
-                                final result = await FilePicker.platform.pickFiles(allowMultiple: true);
-
-                                if (result != null) {
-                                  List<File> files = result.paths.map((path) => File(path!)).toList();
-                                } else {
-                                  // User canceled the picker
-                                }
+                                await Get.bottomSheet(chooseFileBottomSheet());
 
 /*
                               final pickedVideo = await ImagePicker().pickVideo(
@@ -140,12 +144,26 @@ class _ChatTextFieldState extends State<ChatTextField> {
                                 File audioFile = await stop();
 
                                 Get.defaultDialog(
-                                  textCancel: 'cancel recording',
-                                  textConfirm: 'send recording',
-                                  onConfirm: () {
-                                    sendAudio(audioFile);
-                                    Get.back();
-                                  },
+                                  title: 'Do you want to send the recording?',
+                                  middleText: '',
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('Cancel'),
+                                      onPressed: () {
+                                        Get.back();
+                                      },
+                                    ),
+                                    const SizedBox(
+                                      width: 40,
+                                    ),
+                                    ElevatedButton(
+                                      child: const Text('Send'),
+                                      onPressed: () {
+                                        sendAudio(audioFile);
+                                        Get.back();
+                                      },
+                                    ),
+                                  ],
                                 );
                               } else {
                                 await record();
@@ -191,6 +209,184 @@ class _ChatTextFieldState extends State<ChatTextField> {
           ),
         ),
       ]),
+    );
+  }
+
+  Widget chooseFileBottomSheet() {
+    final selectedIcon = 'image'.obs;
+    return Container(
+      decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(25),
+            topRight: Radius.circular(25),
+          )),
+      height: 100,
+      padding: const EdgeInsets.only(left: 6, right: 6, top: 10),
+      width: double.infinity,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          GestureDetector(
+            onTap: () async {
+              selectedIcon.value = 'image';
+
+              final pickedImage = await ImagePicker().pickImage(
+                source: ImageSource.camera,
+              );
+
+              if (pickedImage == null) {
+                return;
+              }
+
+              final imageFile = File(pickedImage.path);
+
+              Get.to(() => PickedPhotoViewer(
+                    sendImage: sendImage,
+                    image: imageFile,
+                  ));
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Colors.blue,
+                  child: FaIcon(
+                    FontAwesomeIcons.solidImage,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                Text(
+                  'Image',
+                  style: TextStyle(color: Colors.grey[600]),
+                )
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () async {
+              selectedIcon.value = 'video';
+
+              final pickedVideo = await ImagePicker().pickVideo(
+                source: ImageSource.gallery,
+              );
+
+              if (pickedVideo == null) {
+                log('video path ${pickedVideo!.path}');
+                return;
+              }
+
+              final videoFile = File(pickedVideo.path);
+
+              Get.to(() => PickedVideoScreen(
+                    video: videoFile,
+                    sendVideo: sendVideo,
+                  ));
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Colors.green,
+                  child: FaIcon(
+                    FontAwesomeIcons.video,
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'Video',
+                  style: TextStyle(color: Colors.grey[600]),
+                )
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () async {
+              selectedIcon.value = 'audio';
+
+              final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+
+              if (result == null) {
+                return;
+              }
+
+              File audioFile = File(result.paths[0]!);
+
+              Get.defaultDialog(
+                title: 'Do you want to send the audio?',
+                titlePadding: const EdgeInsets.only(top: 10, right: 15, left: 15),
+                middleText: '',
+                confirm: ElevatedButton(
+                  child: const Text('Send'),
+                  onPressed: () {
+                    sendAudio(audioFile);
+                    Get.back();
+                  },
+                ),
+                cancel: TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Get.back();
+                  },
+                ),
+              );
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Colors.blue,
+                  child: Icon(
+                    Icons.mic,
+                    color: Colors.white,
+                    size: 25,
+                  ),
+                ),
+                Text(
+                  'Audio',
+                  style: TextStyle(color: Colors.grey[600]),
+                )
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () async {
+              selectedIcon.value = 'file';
+
+              final result = await FilePicker.platform.pickFiles(allowMultiple: true, type: FileType.any);
+
+              if (result != null) {
+                // ignore: unused_local_variable
+                List<File> files = result.paths.map((path) => File(path!)).toList();
+              } else {
+                // User canceled the picker
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Colors.cyan[700],
+                  child: const FaIcon(
+                    FontAwesomeIcons.solidFile,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'File',
+                  style: TextStyle(color: Colors.grey[600]),
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

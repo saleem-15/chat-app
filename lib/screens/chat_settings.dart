@@ -1,5 +1,8 @@
+// ignore_for_file: unnecessary_cast
+
 import 'dart:developer';
 
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:get/get.dart';
 
 import '../widgets/message_bubble.dart';
@@ -17,6 +20,7 @@ class _ChatSettingsState extends State<ChatSettings> {
   double _currentSliderValue = MessageBubbleSettings.fontSize.value.toDouble();
 
   Rx<ChatBacground> chatBackgroundType = MessageBubbleSettings.backgroundType;
+  Rx<Color> chatBackgroundColor = (MessageBubbleSettings.chatBackgroundColor as Rx<Color>);
 
   @override
   Widget build(BuildContext context) {
@@ -28,10 +32,14 @@ class _ChatSettingsState extends State<ChatSettings> {
             Stack(
               children: [
                 Positioned.fill(
-                  child: Image.asset(
-                    MessageBubbleSettings.chatBackgroundImage.value,
-                    fit: BoxFit.fitWidth,
-                  ),
+                  child: chatBackgroundType.value == ChatBacground.image
+                      ? Image.asset(
+                          MessageBubbleSettings.chatBackgroundImage.value,
+                          fit: BoxFit.fitWidth,
+                        )
+                      : Ink(
+                          color: chatBackgroundColor.value,
+                        ),
                 ),
                 Container(
                   height: 250,
@@ -96,8 +104,12 @@ class _ChatSettingsState extends State<ChatSettings> {
                       Radio(
                         value: ChatBacground.color,
                         groupValue: chatBackgroundType.value,
-                        onChanged: (value) {
+                        onChanged: (value) async {
                           chatBackgroundType.value = value!;
+
+                          if (chatBackgroundType.value == ChatBacground.color) {
+                            await Get.defaultDialog(title: '', content: color());
+                          }
                         },
                         activeColor: Colors.green,
                       ),
@@ -137,6 +149,50 @@ class _ChatSettingsState extends State<ChatSettings> {
               ),
             )
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget color() {
+    return SingleChildScrollView(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(25),
+        ),
+        width: double.infinity,
+        padding: const EdgeInsets.only(left: 8, right: 8, bottom: 6),
+        child: ColorPicker(
+          padding: const EdgeInsets.only(left: 6, right: 6, bottom: 6),
+          // starting color.
+          color: chatBackgroundColor.value,
+          onColorChanged: (Color color) {
+            chatBackgroundColor.value = color;
+          },
+          copyPasteBehavior: const ColorPickerCopyPasteBehavior(
+            longPressMenu: true,
+          ),
+          showColorCode: true,
+          pickersEnabled: const <ColorPickerType, bool>{
+            ColorPickerType.both: false,
+            ColorPickerType.primary: true,
+            ColorPickerType.accent: false,
+            ColorPickerType.bw: false,
+            ColorPickerType.custom: true,
+            ColorPickerType.wheel: true,
+          },
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          heading: Text(
+            'Select background color',
+            style: Theme.of(context).textTheme.headline5,
+          ),
+          subheading: Text(
+            'Select color shade',
+            style: Theme.of(context).textTheme.subtitle1,
+          ),
         ),
       ),
     );

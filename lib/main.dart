@@ -10,16 +10,23 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'controllers/controller.dart';
 import 'models/chat.dart';
+import 'models/message.dart';
+import 'models/message_type.dart';
 import 'screens/auth_screen.dart';
 import 'screens/user_chats.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+  Hive.registerAdapter(MessageTypeAdapter());
+  Hive.registerAdapter(MessageAdapter());
   Hive.registerAdapter(ChatAdapter());
 
   Dao.chatsBox = await Hive.openBox<Chat>('box');
   Dao.myBox = await Hive.openBox('chats');
+
+  // await Dao.chatsBox.clear();
+  // await Dao.myBox.clear();
 
   await Firebase.initializeApp();
   runApp(const MyApp());
@@ -35,8 +42,6 @@ class MyApp extends StatelessWidget {
       statusBarColor: Colors.transparent,
     ));
 
-    Get.put(Controller());
-
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Chat App',
@@ -49,9 +54,24 @@ class MyApp extends StatelessWidget {
       home: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
+          ///
           if (snapshot.hasData) {
-            return // const ChatScreen(chatId: 'U1kTcWfE36fMFVnWxzVW');
-                const UserChats();
+            final controller = Get.put(Controller());
+
+            return FutureBuilder(
+              future: !Dao.instance.isDataInitilizedFromBackend ? controller.intilizeDataFromBackend() : controller.initilizeData(),
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Container(
+                    color: Colors.white,
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: const Center(child: CircularProgressIndicator()),
+                  );
+                }
+                return const UserChats();
+              },
+            );
           }
           return const AuthScreen();
         },

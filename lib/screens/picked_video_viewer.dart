@@ -2,13 +2,21 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:video_viewer/video_viewer.dart';
 
-class PickedPhotoViewer extends StatelessWidget {
-  PickedPhotoViewer({required this.image, super.key, required this.sendImage});
+class PickedVideoScreen extends StatelessWidget {
+  PickedVideoScreen({
+    Key? key,
+    required this.video,
+    required this.sendVideo,
+  }) : super(key: key);
 
-  final File image;
-  final void Function(File image, String? message) sendImage;
+  final File video;
+  final void Function(File video, String? message) sendVideo;
+
   final _textController = TextEditingController();
+
+  final VideoViewerController controller = VideoViewerController();
 
   @override
   Widget build(BuildContext context) {
@@ -18,12 +26,16 @@ class PickedPhotoViewer extends StatelessWidget {
         backgroundColor: Colors.black,
         title: const Text('test'),
       ),
-      body: 
-      SingleChildScrollView(
+      body: SingleChildScrollView(
         child: Column(
           children: [
-            InteractiveViewer(
-              child: Image.file(image),
+            VideoViewer(
+              controller: controller,
+              source: {
+                "SubRip Text": VideoSource(
+                  video: VideoPlayerController.file(video),
+                )
+              },
             ),
             SizedBox(
               width: MediaQuery.of(context).size.width,
@@ -65,8 +77,8 @@ class PickedPhotoViewer extends StatelessWidget {
                       onPressed: () {
                         final message = _textController.text.trim();
 
-                        sendImage(
-                          image,
+                        sendVideo(
+                          video,
                           message.isEmpty ? null : message,
                         );
 
@@ -77,6 +89,7 @@ class PickedPhotoViewer extends StatelessWidget {
                 ],
               ),
             ),
+
             // Padding(
             //   padding: const EdgeInsets.all(10.0),
             //   child: TextFormField(
@@ -89,8 +102,8 @@ class PickedPhotoViewer extends StatelessWidget {
             //         onPressed: () {
             //           final message = _textController.text.trim();
 
-            //           sendImage(
-            //             image,
+            //           sendVideo(
+            //             video,
             //             message.isEmpty ? null : message,
             //           );
 

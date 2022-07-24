@@ -1,21 +1,23 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import 'package:chat_app/helpers/message_bubble_settings.dart';
+import 'package:get/get.dart';
 
 import '../screens/image_message_screen.dart';
 
 class ImageMessageBubble extends StatelessWidget {
   const ImageMessageBubble({
     Key? key,
-    required this.imageUrl,
+    required this.image,
     this.text,
     required this.timeSent,
     required this.username,
     required this.isMyMessage,
   }) : super(key: key);
 
-  final String imageUrl;
+  final File image;
   final String? text;
   final String timeSent;
   final String username;
@@ -33,8 +35,14 @@ class ImageMessageBubble extends StatelessWidget {
           onTap: () {
             //to remove the keyboaed (better animation)
             FocusScope.of(context).unfocus();
+
+            // showImageViewer(context, FileImage(image), onViewerDismissed: () {
+            //   print("dismissed");
+            // });
             Get.to(() => ImageMessageScreen(
-                  imageUrl: imageUrl,
+                  image: image,
+                  senderName: username,
+                  timeSent: timeSent,
                 ));
           },
           child: Container(
@@ -73,14 +81,16 @@ class ImageMessageBubble extends StatelessWidget {
                 Stack(
                   children: [
                     Hero(
-                      tag: imageUrl,
+                      tag: image.hashCode,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(borderRadius),
-                        child: Image.network(
-                          imageUrl,
-                          loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                            return Center(child: child);
-                          },
+                        child: Image.file(
+                          image,
+
+                          /// this code is for Image.network
+                          // loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                          //   return Center(child: child);
+                          // },
                         ),
                       ),
                     ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'package:chat_app/api/firebase_api.dart';
 import 'package:chat_app/models/message.dart';
@@ -6,46 +8,53 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 import '../dao/dao.dart';
 import '../dao/files_manager.dart';
 import '../models/chat.dart';
 import '../models/user.dart';
 
-class Controller extends GetxController {
-  Controller() {
-    if (!db.isDataInitilizedFromBackend) {
-      intilizeDataFromBackend();
-    } else {
-      initilizeData();
-    }
-  }
+class Controller extends SuperController {
+  Controller();
 
+  Timer? timer;
   Dao get db => Dao.instance;
-  FileManager get files => FileManager.instance;
+  FileManager get fileManager => FileManager.instance;
 
   var myChatsList = <Rx<Chat>>[].obs;
 
   late final MyUser myUser;
 
-  String? _username;
   String? email = FirebaseAuth.instance.currentUser?.email!;
+
+  void sendToServerThatIamOnline() {
+    FirebaseApi.sendToServerThatIamOnline();
+  }
 
   Future<void> intilizeDataFromBackend() async {
     //get data from back end
     final chats = await FirebaseApi.getMyChats();
-
     myUser = await FirebaseApi.getUserData();
-    db.setUserData(myUser);
 
     //store the data in the database
-    db.addListOfChats(chats);
+    setUserData(myUser);
+
+    await storeChatsInDatabase(chats);
 
     //add the data to the list of chats
     addListOfChats(chats);
 
     //write in the db that data is initialized
     db.setDataIsInitializedFromBackend();
+
+    //open streams
+    for (var chat in myChatsList) {
+      getMessagesFromBackend(chat.value.chatPath);
+    }
+
+    //start sending to the server that I am online
+    timer = Timer.periodic(const Duration(minutes: 1), (timer) => sendToServerThatIamOnline());
 
     update();
   }
@@ -65,32 +74,45 @@ class Controller extends GetxController {
     for (var chat in chats) {
       myChatsList.add(chat.obs);
     }
-
     update();
+    //open streams
+    for (var chat in myChatsList) {
+      getMessagesFromBackend(chat.value.chatPath);
+    }
 
-    //return [model.MyUser(name: 'saleem',chatId: '',image: '',uid: '')];
+    //start sending to the server that u are online
+    timer = Timer.periodic(const Duration(minutes: 1), (timer) => sendToServerThatIamOnline());
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> getMessages(String chatPath) {
+  Stream<QuerySnapshot<Map<String, dynamic>>> getMessagesFromBackend(String chatPath) {
     final stream = FirebaseApi.getMessages(chatPath);
 
-    stream.listen((event) {
-      final messages = [];
-
+    stream.listen((event) async {
       for (var docChange in event.docChanges) {
         final msgDoc = docChange.doc;
+        final message = messageFromDocument(msgDoc, chatPath);
+
         switch (docChange.type) {
           case DocumentChangeType.added:
+            addMessage(await message);
+            update();
+
             break;
 
           case DocumentChangeType.modified:
+            updateMessage(await message);
+            update();
+
             break;
 
           case DocumentChangeType.removed:
+            update();
+
             break;
         }
       }
     });
+
     return stream;
   }
 
@@ -100,16 +122,18 @@ class Controller extends GetxController {
     final messages = chat.value.messages;
 
     final stream = FirebaseApi.getMessages(chatPath);
-    stream.listen((event) {
-      final messages = [];
-
+    stream.listen((event) async {
       for (var docChange in event.docChanges) {
         final msgDoc = docChange.doc;
+        final message = messageFromDocument(msgDoc, chatPath);
+
         switch (docChange.type) {
           case DocumentChangeType.added:
+            addMessage(await message);
             break;
 
           case DocumentChangeType.modified:
+            updateMessage(await message);
             break;
 
           case DocumentChangeType.removed:
@@ -121,12 +145,68 @@ class Controller extends GetxController {
     return messages;
   }
 
-  void addMessage(Message msg) {
-    db.addMessage(msg);
+  Future<Message> messageFromDocument(DocumentSnapshot<Map<String, dynamic>> msgDoc, String chatPath) async {
+    late final Message message;
+
+    switch (msgDoc['type']) {
+      case 'text':
+        message = Message(chatPath: chatPath, text: msgDoc['text'], senderId: msgDoc['senderId']);
+        break;
+
+      case 'image':
+        final filePath = await FileManager.instance.saveFileFromNetwork(msgDoc['image'], chatPath);
+        final image = File(filePath);
+        message = Message.image(chatPath: chatPath, image: image.path, text: msgDoc['text'], senderId: msgDoc['senderId']);
+        break;
+
+      case 'video':
+        final filePath = await FileManager.instance.saveFileFromNetwork(msgDoc['video'], chatPath);
+        log('video path: $filePath');
+        final video = File(filePath);
+        message = Message.video(chatPath: chatPath, video: video.path, text: msgDoc['text'], senderId: msgDoc['senderId']);
+        break;
+
+      case 'audio':
+        final filePath = await FileManager.instance.saveFileFromNetwork(msgDoc['audio'], chatPath);
+        log('audio path: $filePath');
+        final audioFile = File(filePath);
+        message = Message.audio(chatPath: chatPath, audio: audioFile.path, text: msgDoc['text'], senderId: msgDoc['senderId']);
+        break;
+    }
+
+    return message;
   }
 
-  void sendMessage(String msg, String chatPath) async {
-    FirebaseApi.sendMessage(msg, chatPath, myUser.name, myUser.image);
+  void addMessage(Message message) {
+    final chat = myChatsList.firstWhere((chat) => chat.value.chatPath == message.chatPath);
+    chat.value.messages.add(message);
+    update();
+    db.addMessage(message);
+  }
+
+  void updateMessage(Message message) {
+    final chat = myChatsList.firstWhere((chat) => chat.value.chatPath == message.chatPath);
+    final indexOfMessageToBeUpdated = chat.value.messages.indexWhere((msg) {
+      if (msg == message) {
+        log('Message updated Succesfully');
+        return true;
+      } else {
+        log('Message IS NOT updated');
+
+        return false;
+      }
+    });
+
+    chat.value.messages[indexOfMessageToBeUpdated] = message;
+
+    // db.updateMessage(message);
+  }
+
+  void sortChatMessages(String chatPath) {
+    final chat = myChatsList.firstWhere((chat) => chat.value.chatPath == chatPath);
+    chat.value.messages.sort((a, b) {
+      return a.timeSent.millisecond.compareTo(b.timeSent.millisecond);
+    });
   }
 
   Future<void> addNewContact(MyUser user) async {
@@ -136,6 +216,9 @@ class Controller extends GetxController {
 
     final chat = Chat(name: user.name, image: user.image, chatPath: chatPath, userId: user.uid);
 
+    final imageFilePath = await fileManager.saveFileFromNetwork(chat.image, chat.chatPath);
+
+    chat.image = imageFilePath;
     db.addChat(chat);
 
     return;
@@ -163,8 +246,38 @@ class Controller extends GetxController {
     return;
   }
 
-  Future<MyUser> getUserbyId(String userID) async {
+  Future<MyUser> getUserbyIdFromBackend(String userID) async {
     return FirebaseApi.getUserbyId(userID);
+  }
+
+  void printChatsData() {
+    for (var chat in myChatsList) {
+      log('num of chats: ${myChatsList.length}');
+      log('chat name: ${chat.value.name}');
+      log('user id: ${chat.value.userId}');
+      log('********************************');
+    }
+  }
+
+  MyUser getUserbyId(String userID) {
+    if (userID == myUser.uid) {
+      return myUser;
+    }
+    //printChatsData();
+    log('user id: $userID');
+    final chat = myChatsList.firstWhere((chat) => !chat.value.isGroupChat && chat.value.userId == userID);
+
+    final userData = chat.value;
+    return MyUser(
+      image: userData.image,
+      name: userData.name,
+      uid: userID,
+      chatId: userData.chatPath,
+    );
+  }
+
+  void sendMessage(String msg, String chatPath) async {
+    FirebaseApi.sendMessage(msg, chatPath, myUser.name, myUser.image, Timestamp.now());
   }
 
   Future<Chat> getGroupChatbyId(String groupId) async {
@@ -172,15 +285,80 @@ class Controller extends GetxController {
   }
 
   void sendPhoto(Message image) {
-    files.saveImageToFile(image.image!, image.chatPath);
+    fileManager.saveToFile(File(image.image!), image.chatPath);
     FirebaseApi.sendPhoto(image, myUser.name, myUser.image);
   }
 
   void sendVideo(Message video) {
+    fileManager.saveToFile(File(video.video!), video.chatPath);
+
     FirebaseApi.sendVideo(video, myUser.name, myUser.image);
   }
 
   void sendAudio(Message audio) {
+    fileManager.saveToFile(File(audio.audio!), audio.chatPath);
+
     FirebaseApi.sendAudio(audio, myUser.name, myUser.image);
+  }
+
+  Future<void> storeChatsInDatabase(List<Chat> chats) async {
+    for (var chat in chats) {
+      final imageFilePath = await fileManager.saveFileFromNetwork(chat.image, chat.chatPath);
+
+      chat.image = imageFilePath;
+      log('Controller => storeChatsInDatabase => image path: $imageFilePath');
+    }
+    db.addListOfChats(chats);
+  }
+
+  Future<void> setUserData(MyUser myUser) async {
+    final imageFilePath = await fileManager.saveFileFromNetwork(myUser.image, 'myInfo');
+    myUser.image = imageFilePath;
+    db.setUserData(myUser);
+  }
+
+  Future<String> getLastTimeOnline(String userId) async {
+    final timestamp = await FirebaseApi.getLastTimeOnline(userId);
+    final lastOnline = timestamp.toDate();
+    final now = DateTime.now();
+    final difference = now.difference(lastOnline);
+
+    if (now.day != lastOnline.day) {
+      final lastSeen = '${DateFormat('MMM d').format(lastOnline)} at ${DateFormat(' h:mm a').format(lastOnline)}';
+
+      return 'last seen $lastSeen';
+    } else if (difference.inSeconds < 60) {
+      //if it was (last_online) in the last  60 seconds
+      log('difference in seconds: ${difference.inSeconds}');
+      return 'Online';
+    }
+    return 'last seen at ${Utils.formatDate(lastOnline)}';
+  }
+
+  @override
+  void onDetached() {
+    if (timer != null) {
+      timer!.cancel();
+    }
+  }
+
+  @override
+  void onInactive() {
+    if (timer != null) {
+      timer!.cancel();
+    }
+  }
+
+  @override
+  void onPaused() {
+    if (timer != null) {
+      timer!.cancel();
+    }
+  }
+
+  @override
+  void onResumed() {
+//start sending to the server that u are online
+    timer = Timer.periodic(const Duration(minutes: 1), (timer) => sendToServerThatIamOnline());
   }
 }

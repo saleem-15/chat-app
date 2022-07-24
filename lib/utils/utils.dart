@@ -1,12 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:developer';
+
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 
 class Utils {
-  static String formatDate(Timestamp time) {
+  static String formatDate(DateTime time) {
     final myTimeFormat = DateFormat('h:mm a');
 
-    return myTimeFormat.format((time).toDate());
+    return myTimeFormat.format(time);
   }
 
   static String getCollectionId(String docPath) {
@@ -17,7 +18,10 @@ class Utils {
     return docPath.split('/')[1];
   }
 
-  static String getImageName(String url) {
-   return FirebaseStorage.instance.refFromURL(url).name;
+  static String getFileName(String url) {
+    final name = FirebaseStorage.instance.refFromURL(url).name;
+    // FirebaseStorage.instance.refFromURL(url).
+    log('name from firebase is: $name');
+    return name;
   }
 }

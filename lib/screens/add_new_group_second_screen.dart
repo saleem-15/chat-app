@@ -1,3 +1,5 @@
+// ignore_for_file: must_be_immutable
+
 import 'dart:io';
 
 import 'package:chat_app/controllers/controller.dart';
@@ -45,7 +47,7 @@ class AddNewGroup2ndScreen extends StatelessWidget {
                 fontSize: 16.0);
             return;
           }
-          Get.find<Controller>().createGroupChat(groupName, selectedPeopleIds,_userImageFile);
+          Get.find<Controller>().createGroupChat(groupName, selectedPeopleIds, _userImageFile);
           Get.to(() => const UserChats());
         },
       ),
@@ -147,20 +149,6 @@ class AddNewGroup2ndScreen extends StatelessWidget {
                             ),
                           )
                         ],
-                      ),
-                    ),
-                  ],
-                );
-                return Column(
-                  children: [
-                    ListTile(
-                      leading: CircleAvatar(
-                        radius: 22,
-                        backgroundImage: NetworkImage(image),
-                      ),
-                      title: Text(
-                        name,
-                        style: const TextStyle(fontSize: 18),
                       ),
                     ),
                   ],

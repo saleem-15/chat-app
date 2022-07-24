@@ -1,38 +1,67 @@
-import 'package:chat_app/widgets/messages.dart';
+import 'dart:async';
+import 'dart:developer';
+import 'dart:io';
+
+import 'package:chat_app/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:chat_app/widgets/messages.dart';
+
+import '../controllers/controller.dart';
 import '../helpers/message_bubble_settings.dart';
 import '../widgets/chat_text_field.dart';
 import 'user_details_screen.dart';
 
-class ChatScreen extends StatelessWidget {
-  const ChatScreen({
+class ChatScreen extends StatefulWidget {
+  // ignore: prefer_const_constructors_in_immutables
+  ChatScreen({
+    Key? key,
+    required this.chatPath,
     required this.name,
     required this.image,
-    required this.chatPath,
-    super.key,
-  });
+    required this.userId,
+  }) : super(key: key);
 
   final String chatPath;
   final String name;
   final String image;
+  final String? userId;
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final timer = Timer.periodic(const Duration(seconds: 50), (timer) {
+    Get.find<Controller>().update();
+  });
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
+  }
+
+  String? lastSeen;
 
   @override
   Widget build(BuildContext context) {
+    final bool isGroupChat = Utils.getCollectionId(widget.chatPath) == 'Group_chats' ? true : false;
+    Rx<ChatBacground> chatBackgroundType = MessageBubbleSettings.backgroundType;
+    log('image path: ${widget.image}');
     return Scaffold(
       appBar: AppBar(
         title: InkWell(
           onTap: () {
             Get.to(() => UserDetailsScreen(
-                  name: name,
-                  image: image,
+                  name: widget.name,
+                  image: widget.image,
                 ));
           },
           child: Row(
             children: [
               CircleAvatar(
-                backgroundImage: NetworkImage(image),
+                backgroundImage: FileImage(File(widget.image)),
                 maxRadius: 20,
               ),
               const SizedBox(
@@ -42,16 +71,38 @@ class ChatScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    name,
+                    widget.name,
                     style: const TextStyle(fontSize: 18),
                   ),
                   const SizedBox(
                     height: 3,
                   ),
-                  Text(
-                    'Online',
-                    style: TextStyle(color: Colors.grey[200], fontSize: 12),
-                  ),
+                  if (!isGroupChat)
+                    GetBuilder<Controller>(
+                      builder: (controller) => FutureBuilder(
+                        future: controller.getLastTimeOnline(widget.userId!),
+                        builder: (BuildContext context, AsyncSnapshot snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            // if (lastSeen == null) {
+                            return Text(
+                              'Connecting ...',
+                              style: TextStyle(color: Colors.grey[200], fontSize: 12),
+                            );
+
+                            // }
+                            //    return Text(
+                            //   lastSeen!,
+                            //   style: TextStyle(color: Colors.grey[200], fontSize: 12),
+                            // );
+                          }
+
+                          return Text(
+                            snapshot.data,
+                            style: TextStyle(color: Colors.grey[200], fontSize: 12),
+                          );
+                        },
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -62,18 +113,27 @@ class ChatScreen extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            MessageBubbleSettings.chatBackgroundImage.value,
-            fit: BoxFit.cover,
+          Obx(
+            () => Positioned.fill(
+              child: chatBackgroundType.value == ChatBacground.image
+                  ? Image.asset(
+                      MessageBubbleSettings.chatBackgroundImage.value,
+                      fit: BoxFit.cover,
+                    )
+                  : Ink(
+                      color: MessageBubbleSettings.chatBackgroundColor.value,
+                    ),
+            ),
           ),
           Column(
             children: [
               Expanded(
-                  child: Messages(
-                chatPath: chatPath,
-              )),
+                child: Messages(
+                  chatPath: widget.chatPath,
+                ),
+              ),
               ChatTextField(
-                chatPath: chatPath,
+                chatPath: widget.chatPath,
               ),
             ],
           ),

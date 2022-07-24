@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:chat_app/helpers/message_bubble_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,12 +10,12 @@ import '../screens/video_viewer_screen.dart';
 class VideoMessageBubble extends StatelessWidget {
   VideoMessageBubble({
     Key? key,
-    required this.videoUrl,
+    required this.video,
     this.text,
     required this.isMyMessage,
   }) : super(key: key);
 
-  final String videoUrl;
+  final File video;
   final String? text;
   final bool isMyMessage;
   final controller = VideoViewerController();
@@ -28,7 +30,7 @@ class VideoMessageBubble extends StatelessWidget {
             FocusScope.of(context).unfocus();
 
             Get.to(() => VideoViewerScreen(
-                  videoUrl: videoUrl,
+                  video: video,
                 ));
           },
           child: Container(
@@ -50,12 +52,12 @@ class VideoMessageBubble extends StatelessWidget {
                   height: 300,
                   width: 300,
                   child: Hero(
-                    tag: videoUrl,
+                    tag: video,
                     child: VideoViewer(
                       controller: controller,
                       source: {
                         "SubRip Text": VideoSource(
-                          video: VideoPlayerController.network(videoUrl),
+                          video: VideoPlayerController.file(video),
                         )
                       },
                     ),
