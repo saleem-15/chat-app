@@ -1,3 +1,4 @@
+import 'package:chat_app/utils/utils.dart';
 import 'package:get/get.dart';
 
 import '../helpers/message_bubble_settings.dart';
@@ -25,9 +26,12 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final messageMaxWidth = MediaQuery.of(context).size.width - 40;
-    final List<bool> c = _calcLastLineEnd(context, messageMaxWidth, textMessage);
+    final List<bool> c = _calcLastLineEnd(context, messageMaxWidth - 10, textMessage);
     final Rx<bool> isNeedPAdding = c[0].obs;
     final Rx<bool> isNeedNewLine = c[1].obs;
+    final hasEmoji = Utils.hasEmoji(textMessage);
+    // log('Need padding: ${isNeedPAdding.value}');
+    // log('Need line: ${isNeedNewLine.value}');
 
     var fontSize = MessageBubbleSettings.fontSize;
     return Row(
@@ -76,13 +80,13 @@ class MessageBubble extends StatelessWidget {
                     () => Padding(
                       padding: EdgeInsets.only(
                         bottom: isNeedNewLine.value ? 20 : 0,
-                        right: isNeedPAdding.value ? 60 : 0,
+                        right: isNeedPAdding.value || hasEmoji ? 55 : 0,
                       ),
                       child: Text(
                         textMessage,
                         style: TextStyle(
                           fontSize: fontSize.value.toDouble(),
-                          color: Colors.white,
+                          color: isMyMessage ? Colors.white : null,
                         ),
                       ),
                     ),

@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 
 import 'package:chat_app/helpers/message_bubble_settings.dart';
 import 'package:get/get.dart';
+import 'package:image_editor_plus/image_editor_plus.dart';
 
 import '../screens/image_message_screen.dart';
 
+///this is documentaion
 class ImageMessageBubble extends StatelessWidget {
   const ImageMessageBubble({
     Key? key,
@@ -36,14 +38,18 @@ class ImageMessageBubble extends StatelessWidget {
             //to remove the keyboaed (better animation)
             FocusScope.of(context).unfocus();
 
-            // showImageViewer(context, FileImage(image), onViewerDismissed: () {
-            //   print("dismissed");
-            // });
             Get.to(() => ImageMessageScreen(
                   image: image,
                   senderName: username,
                   timeSent: timeSent,
                 ));
+
+            // Get.to(
+            //   ImageEditor(
+            //     image: image.readAsBytesSync(), // <-- Uint8List of image
+            //     appBar: Colors.blue,
+            //   ),
+            // );
           },
           child: Container(
             width: 300,
@@ -81,7 +87,7 @@ class ImageMessageBubble extends StatelessWidget {
                 Stack(
                   children: [
                     Hero(
-                      tag: image.hashCode,
+                      tag: image.path,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(borderRadius),
                         child: Image.file(

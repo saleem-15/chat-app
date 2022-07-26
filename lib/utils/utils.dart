@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 
@@ -20,8 +18,12 @@ class Utils {
 
   static String getFileName(String url) {
     final name = FirebaseStorage.instance.refFromURL(url).name;
-    // FirebaseStorage.instance.refFromURL(url).
-    log('name from firebase is: $name');
+    // log('name from firebase is: $name');
     return name;
+  }
+
+ static bool hasEmoji(String text) {
+    final RegExp emojiRegex = RegExp(r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])');
+    return emojiRegex.hasMatch(text);
   }
 }

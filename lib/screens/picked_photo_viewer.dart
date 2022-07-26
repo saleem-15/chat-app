@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class PickedPhotoViewer extends StatelessWidget {
-  PickedPhotoViewer({required this.image, super.key, required this.sendImage});
+  PickedPhotoViewer({
+    Key? key,
+    required this.image,
+    required this.sendImage,
+  }) : super(key: key);
 
   final File image;
   final void Function(File image, String? message) sendImage;
@@ -18,8 +22,7 @@ class PickedPhotoViewer extends StatelessWidget {
         backgroundColor: Colors.black,
         title: const Text('test'),
       ),
-      body: 
-      SingleChildScrollView(
+      body: SingleChildScrollView(
         child: Column(
           children: [
             InteractiveViewer(

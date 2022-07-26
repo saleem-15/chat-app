@@ -177,7 +177,7 @@ class FirebaseApi {
           otherUser = await getUserbyId(firstUserID);
           otherUser.chatId = myChat.id;
         }
-        final c = Chat(chatPath: chatPath, image: otherUser.image, name: otherUser.name, userId: otherUser.uid);
+        final c = Chat(chatPath: chatPath, image: otherUser.image, name: otherUser.name, usersIds: [otherUser.uid]);
         log(c.toString());
         myChats.add(c);
 
@@ -213,7 +213,7 @@ class FirebaseApi {
   static Future<Chat> getGroupData(String groupId) async {
     final groupDoc = await db.collection('Group_chats').doc(groupId).get();
 
-    return Chat.group(name: groupDoc['group_name'], image: groupDoc['image'], chatPath: groupId);
+    return Chat.group(name: groupDoc['group_name'], image: groupDoc['image'], chatPath: groupId, usersIds: groupDoc['members']);
   }
 
   static Future<String> getUsername() async {
@@ -226,14 +226,12 @@ class FirebaseApi {
   }
 
   static Future<String> createGroupChat(String groupName, List<String> membersIds, String imageUrl) async {
-    // create group chat document
+    /// create group chat document
+    /// returns the chat path
     final chat = await db.collection('Group_chats').add({
       'group_name': groupName,
       'image': imageUrl,
-      'members': [
-        myUid,
-        ...membersIds,
-      ],
+      'members': membersIds,
     });
     log(chat.path);
     //add the created group to the "user_chats" for all the members of the group
@@ -304,7 +302,6 @@ class FirebaseApi {
 
   static Future<Timestamp> getLastTimeOnline(String userId) async {
     final user = await db.collection('users').doc(userId).get();
-   
 
     return user['last_online'];
   }

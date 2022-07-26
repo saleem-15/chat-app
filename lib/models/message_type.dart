@@ -1,6 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
-part 'message_type.g.dart';
+part 'hive  adapters/message_type.g.dart';
 @HiveType(typeId: 3)
 enum MessageType {
     @HiveField(0)

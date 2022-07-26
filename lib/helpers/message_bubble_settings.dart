@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../dao/dao.dart';
+import '../storage/dao.dart';
 
 enum ChatBacground {
   color,
@@ -9,10 +9,10 @@ enum ChatBacground {
 }
 
 class MessageBubbleSettings {
-  static RxInt fontSize = Dao.getMessageFontSize().obs;
+  static final RxInt _fontSize = Dao.getMessageFontSize().obs;
   static final RxString _chatBackgroundImage = Dao.getChatBackground().obs;
   static final _backgroundType = Dao.getBackgroundType().obs;
-  static final Rx<Color> chatBackgroundColor = Dao.getChatBackgroundColor().obs;
+  static final Rx<Color> _chatBackgroundColor = Dao.getChatBackgroundColor().obs;
 
   static List<String> backgroundImages = [
     'assets/chat_background_light.png',
@@ -21,8 +21,12 @@ class MessageBubbleSettings {
   ];
 
   static setFontSize(int newValue) async {
-    fontSize.value = newValue;
+    _fontSize.value = newValue;
     Dao.setMessageFontSize(newValue);
+  }
+
+  static get fontSize {
+    return _fontSize;
   }
 
   static Rx<ChatBacground> get backgroundType => _backgroundType;
@@ -41,10 +45,12 @@ class MessageBubbleSettings {
   }
 
   static setchatBackgroundColor(Color color) async {
-    chatBackgroundColor.value = color;
+    _chatBackgroundColor.value = color;
     Dao.setBackgroundType(ChatBacground.color);
     Dao.setChatBackgroundColor(color);
   }
+
+  static get chatBackgroundColor => _chatBackgroundColor;
 
   static Color myMessageColor = Colors.blue;
   // Color(0xff2176FF);

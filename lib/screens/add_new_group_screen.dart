@@ -1,5 +1,7 @@
 // ignore_for_file: must_be_immutable
 
+import 'dart:io';
+
 import 'package:chat_app/screens/add_new_group_second_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -78,7 +80,7 @@ class AddNewGroupScreen extends StatelessWidget {
                               backgroundColor: Colors.grey.shade300,
                               avatar: CircleAvatar(
                                 radius: 15,
-                                backgroundImage: NetworkImage(selectedPerson.image),
+                                backgroundImage: FileImage(File(selectedPerson.image)),
                                 backgroundColor: Colors.grey.shade200,
                               ),
                               label: Text(selectedPerson.name),
@@ -110,7 +112,7 @@ class AddNewGroupScreen extends StatelessWidget {
                               children: [
                                 CircleAvatar(
                                   radius: 25,
-                                  backgroundImage: NetworkImage(image),
+                                  backgroundImage: FileImage(File(image)),
                                 ),
                                 if (selectedPeople.contains(index))
                                   Positioned(

@@ -1,6 +1,6 @@
 // ignore_for_file: depend_on_referenced_packages
 
-import 'package:chat_app/dao/dao.dart';
+import 'package:chat_app/storage/dao.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +24,7 @@ Future<void> main() async {
 
   Dao.chatsBox = await Hive.openBox<Chat>('box');
   Dao.myBox = await Hive.openBox('chats');
+  Dao.printChatBoxData();
 
   // await Dao.chatsBox.clear();
   // await Dao.myBox.clear();
@@ -66,7 +67,24 @@ class MyApp extends StatelessWidget {
                     color: Colors.white,
                     width: double.infinity,
                     height: double.infinity,
-                    child: const Center(child: CircularProgressIndicator()),
+                    child: Scaffold(
+                      body: Center(
+                        child: Container(
+                          height: 200,
+                          width: MediaQuery.of(context).size.width - 80,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Column(
+                            children: const [
+                              Text('Loading'),
+                              SizedBox(height: 20),
+                              Center(child: CircularProgressIndicator()),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   );
                 }
                 return const UserChats();

@@ -28,22 +28,33 @@ class UserChats extends StatelessWidget {
           return ListView.builder(
             itemCount: myChats.length,
             itemBuilder: (context, index) {
-              final chatId = myChats[index].value.chatPath;
-              final userId = myChats[index].value.userId;
-              final image = myChats[index].value.image;
+              //
+              final chat = myChats[index].value;
 
-              return Column(
-                children: [
-                  ChatTile.user(userId: userId, chatPath: chatId, image: image),
-                  const Divider(
-                    height: 0,
-                  ),
-                ],
-              );
+              return chat.isGroupChat
+                  ? Column(
+                      children: [
+                        ChatTile(chatPath: chat.chatPath),
+                        const Divider(
+                          height: 0,
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        ChatTile.user(
+                          userId: chat.usersIds[0],
+                          chatPath: chat.chatPath,
+                        ),
+                        const Divider(
+                          height: 0,
+                        ),
+                      ],
+                    );
             },
           );
         },
       ),
-    );  
+    );
   }
 }

@@ -10,8 +10,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../dao/dao.dart';
-import '../dao/files_manager.dart';
+import '../storage/dao.dart';
+import '../storage/files_manager.dart';
 import '../models/chat.dart';
 import '../models/user.dart';
 
@@ -161,14 +161,14 @@ class Controller extends SuperController {
 
       case 'video':
         final filePath = await FileManager.instance.saveFileFromNetwork(msgDoc['video'], chatPath);
-        log('video path: $filePath');
+        // log('video path: $filePath');
         final video = File(filePath);
         message = Message.video(chatPath: chatPath, video: video.path, text: msgDoc['text'], senderId: msgDoc['senderId']);
         break;
 
       case 'audio':
         final filePath = await FileManager.instance.saveFileFromNetwork(msgDoc['audio'], chatPath);
-        log('audio path: $filePath');
+        // log('audio path: $filePath');
         final audioFile = File(filePath);
         message = Message.audio(chatPath: chatPath, audio: audioFile.path, text: msgDoc['text'], senderId: msgDoc['senderId']);
         break;
@@ -188,10 +188,10 @@ class Controller extends SuperController {
     final chat = myChatsList.firstWhere((chat) => chat.value.chatPath == message.chatPath);
     final indexOfMessageToBeUpdated = chat.value.messages.indexWhere((msg) {
       if (msg == message) {
-        log('Message updated Succesfully');
+        // log('Message updated Succesfully');
         return true;
       } else {
-        log('Message IS NOT updated');
+        // log('Message IS NOT updated');
 
         return false;
       }
@@ -214,7 +214,7 @@ class Controller extends SuperController {
 
     user.chatId = Utils.getdocId(chatPath);
 
-    final chat = Chat(name: user.name, image: user.image, chatPath: chatPath, userId: user.uid);
+    final chat = Chat(name: user.name, image: user.image, chatPath: chatPath, usersIds: [user.uid]);
 
     final imageFilePath = await fileManager.saveFileFromNetwork(chat.image, chat.chatPath);
 
@@ -224,24 +224,22 @@ class Controller extends SuperController {
     return;
   }
 
-  Future<void> createGroupChat(String groupName, List<String> membersIds, File? image) async {
+  Future<void> createGroupChat(String groupName, List<String> membersIds, File image) async {
     final imageId = Timestamp.now().toString();
 
-    if (image != null) {
-      final imageRef = FirebaseStorage.instance.ref().child('chats').child('$imageId.jpg');
+    /// upload the group image
+    final imageRef = FirebaseStorage.instance.ref().child('chats').child('$imageId.jpg');
+    await imageRef.putFile(image).whenComplete(() => null);
+    final imageUrl = await imageRef.getDownloadURL();
 
-      await imageRef.putFile(image).whenComplete(() => null);
+    final groupPath = await FirebaseApi.createGroupChat(groupName, [myUser.uid, ...membersIds], imageUrl);
+    final imageFilePath = await fileManager.saveFileFromNetwork(imageUrl, groupPath);
 
-      final imageUrl = await imageRef.getDownloadURL();
-      final groupPath = await FirebaseApi.createGroupChat(groupName, membersIds, imageUrl);
+    final chatGroup = Chat.group(name: groupName, image: imageFilePath, chatPath: groupPath, usersIds: membersIds);
+    myChatsList.add(chatGroup.obs); //add to the list of chats
 
-      final chatGroup = Chat.group(name: groupName, image: imageUrl, chatPath: groupPath);
-      myChatsList.add(chatGroup.obs); //add to the list of chats
-
-      db.addChat(chatGroup); //add to the database
-    } else {
-      //
-    }
+    update();
+    db.addChat(chatGroup); //add to the database
 
     return;
   }
@@ -254,7 +252,7 @@ class Controller extends SuperController {
     for (var chat in myChatsList) {
       log('num of chats: ${myChatsList.length}');
       log('chat name: ${chat.value.name}');
-      log('user id: ${chat.value.userId}');
+      log('user id: ${chat.value.usersIds}');
       log('********************************');
     }
   }
@@ -264,8 +262,8 @@ class Controller extends SuperController {
       return myUser;
     }
     //printChatsData();
-    log('user id: $userID');
-    final chat = myChatsList.firstWhere((chat) => !chat.value.isGroupChat && chat.value.userId == userID);
+    // log('user id: $userID');
+    final chat = myChatsList.firstWhere((chat) => !chat.value.isGroupChat && chat.value.usersIds[0] == userID);
 
     final userData = chat.value;
     return MyUser(
@@ -276,12 +274,17 @@ class Controller extends SuperController {
     );
   }
 
-  void sendMessage(String msg, String chatPath) async {
-    FirebaseApi.sendMessage(msg, chatPath, myUser.name, myUser.image, Timestamp.now());
+  Future<Chat> getGroupChatbyIdFromBackend(String groupId) async {
+    return await FirebaseApi.getGroupData(groupId);
   }
 
-  Future<Chat> getGroupChatbyId(String groupId) async {
-    return await FirebaseApi.getGroupData(groupId);
+  Chat getGroupChatbyId(String groupId) {
+    final chat = myChatsList.firstWhere((chat) => chat.value.chatPath == groupId);
+    return chat.value;
+  }
+
+  void sendMessage(String msg, String chatPath) async {
+    FirebaseApi.sendMessage(msg, chatPath, myUser.name, myUser.image, Timestamp.now());
   }
 
   void sendPhoto(Message image) {
@@ -360,5 +363,16 @@ class Controller extends SuperController {
   void onResumed() {
 //start sending to the server that u are online
     timer = Timer.periodic(const Duration(minutes: 1), (timer) => sendToServerThatIamOnline());
+  }
+
+  List<MyUser> getGroupUsers(String groupId) {
+    List<MyUser> users = [];
+    final chat = myChatsList.firstWhere((chat) => chat.value.chatPath == groupId);
+
+    for (var userId in chat.value.usersIds) {
+      final user = getUserbyId(userId);
+      users.add(user);
+    }
+    return users;
   }
 }

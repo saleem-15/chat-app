@@ -17,10 +17,10 @@ class AddNewGroup2ndScreen extends StatelessWidget {
   final List<Chat> selectedPeople;
 
   final _groubNameController = TextEditingController();
-  File? _userImageFile;
+  File? _groupImageFile;
 
   void _pickedImage(File image) {
-    _userImageFile = image;
+    _groupImageFile = image;
   }
 
   @override
@@ -33,21 +33,35 @@ class AddNewGroup2ndScreen extends StatelessWidget {
           final List<String> selectedPeopleIds = [];
 
           for (var person in selectedPeople) {
-            selectedPeopleIds.add(person.userId!);
+            selectedPeopleIds.add(person.usersIds[0]);
           }
 
           if (groupName.isEmpty) {
             Fluttertoast.showToast(
-                msg: "Enter the name of the group!",
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.CENTER,
-                timeInSecForIosWeb: 1,
-                backgroundColor: Colors.grey[500],
-                textColor: Colors.white,
-                fontSize: 16.0);
+              msg: "Enter the name of the group!",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.CENTER,
+              timeInSecForIosWeb: 1,
+              backgroundColor: Colors.grey[500],
+              textColor: Colors.white,
+              fontSize: 16.0,
+            );
             return;
           }
-          Get.find<Controller>().createGroupChat(groupName, selectedPeopleIds, _userImageFile);
+
+          if (_groupImageFile == null) {
+            Fluttertoast.showToast(
+              msg: "Add an image fore the group!",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.CENTER,
+              timeInSecForIosWeb: 1,
+              backgroundColor: Colors.grey[500],
+              textColor: Colors.white,
+              fontSize: 16.0,
+            );
+            return;
+          }
+          Get.find<Controller>().createGroupChat(groupName, selectedPeopleIds, _groupImageFile!);
           Get.to(() => const UserChats());
         },
       ),
@@ -63,14 +77,6 @@ class AddNewGroup2ndScreen extends StatelessWidget {
             padding: const EdgeInsets.all(15),
             child: Row(
               children: [
-                // const CircleAvatar(
-                //   radius: 25,
-                //   backgroundColor: Colors.blue,
-                //   child: Icon(
-                //     Icons.camera_alt_outlined,
-                //     color: Colors.white,
-                //   ),
-                // ),
                 UserImagePicker(
                   icon: const Icon(Icons.camera_alt_outlined),
                   radius: 30,
@@ -118,7 +124,7 @@ class AddNewGroup2ndScreen extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: 22,
-                            backgroundImage: NetworkImage(image),
+                            backgroundImage: FileImage(File(image)),
                           ),
                           const SizedBox(
                             width: 15,

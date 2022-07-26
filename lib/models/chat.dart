@@ -1,17 +1,19 @@
 import 'dart:convert';
 
+import 'package:chat_app/utils/utils.dart';
 import 'package:hive/hive.dart';
 
 import 'message.dart';
 
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-part 'chat.g.dart';
+part 'hive  adapters/chat.g.dart';
 
 @HiveType(typeId: 1)
 class Chat {
-  //if the chat is for a user
+  /// if the chat is for a user then only one element in the list .
+  /// if its for a group then there is multiple elements
   @HiveField(0)
-  String? userId;
+  List<String> usersIds;
 
   // (user name) Or (group name)
   @HiveField(1)
@@ -27,39 +29,56 @@ class Chat {
   final bool isGroupChat;
 
   @HiveField(5)
-  List<Message> messages = [];
+  late List<Message> messages = [];
 
   Chat({
-    this.isGroupChat = false,
+    required this.usersIds,
     required this.name,
     required this.image,
     required this.chatPath,
-    required this.userId,
+    this.isGroupChat = false,
   });
 
   Chat.group({
-    this.isGroupChat = true,
+    required this.usersIds,
     required this.name,
     required this.image,
     required this.chatPath,
+    this.isGroupChat = true,
   });
 
   Map<String, dynamic> toMap() {
-    return <String, dynamic>{
-      'name': name,
-      'image': image,
-      'chatPath': chatPath,
-      'userId': userId,
-    };
+    return isGroupChat
+        ? <String, dynamic>{
+            'name': name,
+            'image': image,
+            'chatPath': chatPath,
+            'usersIds': usersIds,
+          }
+        : <String, dynamic>{
+            'name': name,
+            'image': image,
+            'chatPath': chatPath,
+            'userId': usersIds[0],
+          };
   }
 
   factory Chat.fromMap(Map<String, dynamic> map) {
-    return Chat(
-      name: map['name'] as String,
-      image: map['image'] as String,
-      chatPath: map['chatPath'] as String,
-      userId: map['userId'] as String,
-    );
+    final bool isGroup = Utils.getCollectionId(map['chatPath']) == 'Group_chats';
+
+    return isGroup
+        ? Chat.group(
+            name: map['name'] as String,
+            image: map['image'] as String,
+            chatPath: map['chatPath'] as String,
+            usersIds: map['usersIds'] as List<String>,
+          )
+        : Chat(
+            name: map['name'] as String,
+            image: map['image'] as String,
+            chatPath: map['chatPath'] as String,
+            usersIds: [map['userId'] as String],
+          );
   }
 
   String toJson() => json.encode(toMap());
@@ -68,6 +87,6 @@ class Chat {
 
   @override
   String toString() {
-    return 'Chat(userId: $userId, name: $name, image: $image, chatPath: $chatPath, isGroupChat: $isGroupChat)';
+    return 'Chat(userId: $usersIds, name: $name, image: $image, chatPath: $chatPath, isGroupChat: $isGroupChat)';
   }
 }

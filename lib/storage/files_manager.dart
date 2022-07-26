@@ -16,6 +16,8 @@ class FileManager {
     //this function creates the file structure for the app
     final appDir = await getExternalStorageDirectory();
     await Directory('${appDir!.path}/chats').create();
+    await Directory('${appDir.path}/Group_chats').create();
+
     return;
   }
 

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'message_type.dart';
+part of '../message_type.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator

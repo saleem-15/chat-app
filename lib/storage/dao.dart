@@ -1,6 +1,6 @@
 import 'dart:developer';
 
-import 'package:chat_app/dao/files_manager.dart';
+import 'package:chat_app/storage/files_manager.dart';
 import 'package:chat_app/helpers/message_bubble_settings.dart';
 import 'package:chat_app/models/message.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +12,7 @@ import '../models/user.dart';
 
 class Dao {
   Dao() {
-    printChatBoxData();
+    // printChatBoxData();
   }
 
   clearData() async {
@@ -151,7 +151,7 @@ class Dao {
     }
   }
 
-  void printChatBoxData() {
+  static void printChatBoxData() {
     log('Chats stored in the Databas:');
 
     final chats = chatsBox.values.toList();

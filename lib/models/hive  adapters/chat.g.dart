@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'chat.dart';
+part of '../chat.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
@@ -17,11 +17,11 @@ class ChatAdapter extends TypeAdapter<Chat> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Chat(
-      isGroupChat: fields[4] as bool,
+      usersIds: (fields[0] as List).cast<String>(),
       name: fields[1] as String,
       image: fields[2] as String,
       chatPath: fields[3] as String,
-      userId: fields[0] as String?,
+      isGroupChat: fields[4] as bool,
     )..messages = (fields[5] as List).cast<Message>();
   }
 
@@ -30,7 +30,7 @@ class ChatAdapter extends TypeAdapter<Chat> {
     writer
       ..writeByte(6)
       ..writeByte(0)
-      ..write(obj.userId)
+      ..write(obj.usersIds)
       ..writeByte(1)
       ..write(obj.name)
       ..writeByte(2)

@@ -14,8 +14,7 @@ import '../widgets/chat_text_field.dart';
 import 'user_details_screen.dart';
 
 class ChatScreen extends StatefulWidget {
-  // ignore: prefer_const_constructors_in_immutables
-  ChatScreen({
+  const ChatScreen({
     Key? key,
     required this.chatPath,
     required this.name,
@@ -56,13 +55,17 @@ class _ChatScreenState extends State<ChatScreen> {
             Get.to(() => UserDetailsScreen(
                   name: widget.name,
                   image: widget.image,
+                  chatPath: widget.chatPath,
                 ));
           },
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundImage: FileImage(File(widget.image)),
-                maxRadius: 20,
+              Hero(
+                tag: widget.image,
+                child: CircleAvatar(
+                  backgroundImage: FileImage(File(widget.image)),
+                  maxRadius: 20,
+                ),
               ),
               const SizedBox(
                 width: 15,

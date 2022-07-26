@@ -5,7 +5,7 @@ import 'package:hive_flutter/adapters.dart';
 
 import 'message_type.dart';
 
-part 'message.g.dart';
+part 'hive  adapters/message.g.dart';
 
 @HiveType(typeId: 2)
 class Message {

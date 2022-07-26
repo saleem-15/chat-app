@@ -6,10 +6,8 @@ import 'package:chat_app/widgets/video_message.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:voice_message_package/voice_message_package.dart';
-
-import '../helpers/message_bubble_settings.dart';
 import '../utils/utils.dart';
+import 'audio_message.dart';
 import 'image_message.dart';
 import 'message_bubble.dart';
 
@@ -68,26 +66,10 @@ class Messages extends StatelessWidget {
                 );
 
               case 'audio':
-                return Row(
-                  mainAxisAlignment: isMyMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(
-                        right: isMyMessage ? 8 : 0,
-                        left: isMyMessage ? 0 : 8,
-                        bottom: 5,
-                        top: 3,
-                      ),
-                      child: VoiceMessage(
-                        audioSrc: messages[index].audio!,
-                        contactBgColor: isMyMessage ? MessageBubbleSettings.myMessageColor : MessageBubbleSettings.othersMessageColor,
-
-                        //  played: true, // To show played badge or not.
-                        me: isMyMessage, // Set message side.
-                        onPlay: () {}, // Do something when voice played.
-                      ),
-                    ),
-                  ],
+                return AudioMessage(
+                  isMyMessage: isMyMessage,
+                  audioPath: messages[index].audio!,
+                  timeSent: timeSent,
                 );
 
               default:
