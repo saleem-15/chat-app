@@ -5,7 +5,6 @@ import 'dart:io';
 
 // import 'package:emoji_keyboard_flutter/emoji_keyboard_flutter.dart';
 // import 'package:emoji_keyboard_flutter/emoji_keyboard_flutter.dart';
-import 'package:chat_app/widgets/send_attachement_bottom_sheet.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -14,9 +13,10 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../controllers/controller.dart';
-import '../models/message.dart';
-import '../models/message_type.dart';
+import '../../../controllers/controller.dart';
+import '../../../models/message.dart';
+import '../../../models/message_type.dart';
+import 'send_attachement_bottom_sheet.dart';
 import '../screens/picked_photo_viewer.dart';
 
 class ChatTextField extends StatefulWidget {

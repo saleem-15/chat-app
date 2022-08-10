@@ -1,13 +1,12 @@
 // ignore_for_file: unnecessary_cast
 
 import 'dart:developer';
-
+import 'package:flutter/material.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:get/get.dart';
 
-import '../widgets/message_bubble.dart';
 import '../helpers/message_bubble_settings.dart';
-import 'package:flutter/material.dart';
+import 'chat/components/message_bubble.dart';
 
 class ChatSettings extends StatefulWidget {
   const ChatSettings({super.key});
@@ -20,7 +19,8 @@ class _ChatSettingsState extends State<ChatSettings> {
   double _currentSliderValue = MessageBubbleSettings.fontSize.value.toDouble();
 
   Rx<ChatBacground> chatBackgroundType = MessageBubbleSettings.backgroundType;
-  Rx<Color> chatBackgroundColor = (MessageBubbleSettings.chatBackgroundColor as Rx<Color>);
+  Rx<Color> chatBackgroundColor =
+      (MessageBubbleSettings.chatBackgroundColor as Rx<Color>);
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +205,8 @@ class _ChatSettingsState extends State<ChatSettings> {
       itemCount: MessageBubbleSettings.backgroundImages.length,
       itemBuilder: (context, index) => InkWell(
         onTap: () {
-          MessageBubbleSettings.setchatBackgroundImage(MessageBubbleSettings.backgroundImages[index]);
+          MessageBubbleSettings.setchatBackgroundImage(
+              MessageBubbleSettings.backgroundImages[index]);
         },
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 10),

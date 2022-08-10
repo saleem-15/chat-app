@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import 'package:chat_app/helpers/message_bubble_settings.dart';
 import 'package:get/get.dart';
-import 'package:image_editor_plus/image_editor_plus.dart';
 
 import '../screens/image_message_screen.dart';
 
@@ -69,7 +68,9 @@ class ImageMessageBubble extends StatelessWidget {
                   offset: const Offset(0, 2), // changes position of shadow
                 ),
               ],
-              color: isMyMessage ? MessageBubbleSettings.myMessageColor : MessageBubbleSettings.othersMessageColor,
+              color: isMyMessage
+                  ? MessageBubbleSettings.myMessageColor
+                  : MessageBubbleSettings.othersMessageColor,
               borderRadius: BorderRadius.circular(borderRadius),
             ),
             padding: const EdgeInsets.all(2),

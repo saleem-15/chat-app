@@ -37,7 +37,8 @@ class FirebaseApi {
     return FirebaseAuth.instance.currentUser!.uid;
   }
 
-  static Future<void> addNewUser(String username, String uid, String email, String imageUrl) async {
+  static Future<void> addNewUser(
+      String username, String uid, String email, String imageUrl) async {
     // the document id will be the uid of the user
     return await db.collection('users').doc(uid).set({
       'username': username,
@@ -47,7 +48,8 @@ class FirebaseApi {
     });
   }
 
-  static Future<DocumentReference<Map<String, dynamic>>> sendMessage(String msg, String chatPath, String username, String userImage, Timestamp timeSent) async {
+  static Future<DocumentReference<Map<String, dynamic>>> sendMessage(String msg,
+      String chatPath, String username, String userImage, Timestamp timeSent) async {
     final x = await db.doc(chatPath).collection('messages').add({
       'text': msg,
       'createdAt': timeSent,
@@ -66,7 +68,8 @@ class FirebaseApi {
 
     if (user.docs.isEmpty) return null; // if there is no match
 
-    return user.docs[0].exists // if there is a match return the first result (firebase returns a list of results)
+    return user.docs[0]
+            .exists // if there is a match return the first result (firebase returns a list of results)
         ? MyUser(
             chatId: await getChatId(user.docs[0].id),
             name: user.docs[0]['username'],
@@ -74,6 +77,20 @@ class FirebaseApi {
             uid: user.docs[0].id, // id of the document = uid of the user
           )
         : null;
+  }
+
+  static Future<MyUser?> findUserById(String userId) async {
+    var user = await db.collection('users').doc(userId).get();
+    if (!user.exists) {
+      return null;
+    }
+
+    return MyUser(
+      chatId: await getChatId(user.id),
+      name: user['username'],
+      image: user['image_url'],
+      uid: userId,
+    );
   }
 
   // static Future<void> addToUserChats(String contactUid) {
@@ -150,14 +167,18 @@ class FirebaseApi {
     List<MyUser> myChatsList = [];
     final myData = await db.collection('users').doc(myUid).get();
 
-    var myChatsIDs = myData['user_chats'] as List; //returns a list of chat id's (not user id's)
+    var myChatsIDs =
+        myData['user_chats'] as List; //returns a list of chat id's (not user id's)
 
     for (String chatPath in myChatsIDs) {
       log('chat path: $chatPath');
       final collectionName = chatPath.split('/')[0];
       final chatId = chatPath.split('/')[1];
 
-      final myChat = await db.collection(collectionName).doc(chatId).get(); //returns the chat document
+      final myChat = await db
+          .collection(collectionName)
+          .doc(chatId)
+          .get(); //returns the chat document
       final chatMembers = myChat['members'] as List;
 
       if (collectionName == 'chats') {
@@ -177,7 +198,11 @@ class FirebaseApi {
           otherUser = await getUserbyId(firstUserID);
           otherUser.chatId = myChat.id;
         }
-        final c = Chat(chatPath: chatPath, image: otherUser.image, name: otherUser.name, usersIds: [otherUser.uid]);
+        final c = Chat(
+            chatPath: chatPath,
+            image: otherUser.image,
+            name: otherUser.name,
+            usersIds: [otherUser.uid]);
         log(c.toString());
         myChats.add(c);
 
@@ -212,8 +237,20 @@ class FirebaseApi {
 
   static Future<Chat> getGroupData(String groupId) async {
     final groupDoc = await db.collection('Group_chats').doc(groupId).get();
+    final List<String> members = [];
 
-    return Chat.group(name: groupDoc['group_name'], image: groupDoc['image'], chatPath: groupId, usersIds: groupDoc['members']);
+    final list = groupDoc['members'] as List;
+
+    for (var element in list) {
+      members.add(element as String);
+    }
+
+    return Chat.group(
+      name: groupDoc['group_name'],
+      image: groupDoc['image'],
+      chatPath: groupId,
+      usersIds: members,
+    );
   }
 
   static Future<String> getUsername() async {
@@ -225,7 +262,8 @@ class FirebaseApi {
     return db.collectionGroup('messages').snapshots();
   }
 
-  static Future<String> createGroupChat(String groupName, List<String> membersIds, String imageUrl) async {
+  static Future<String> createGroupChat(
+      String groupName, List<String> membersIds, String imageUrl) async {
     /// create group chat document
     /// returns the chat path
     final chat = await db.collection('Group_chats').add({
@@ -244,10 +282,13 @@ class FirebaseApi {
     return chat.path;
   }
 
-  static Future<void> sendPhoto(Message imageMessage, String senderName, String senderImage) async {
+  static Future<void> sendPhoto(
+      Message imageMessage, String senderName, String senderImage) async {
     final imageFileId = imageMessage.image!.hashCode + DateTime.now().hashCode;
 
-    final imageRef = FirebaseStorage.instance.ref().child('chats/${imageMessage.chatPath}/$imageFileId.jpg');
+    final imageRef = FirebaseStorage.instance
+        .ref()
+        .child('chats/${imageMessage.chatPath}/$imageFileId.jpg');
 
     await imageRef.putFile(File(imageMessage.image!)).whenComplete(() => null);
     final imageUrl = await imageRef.getDownloadURL();
@@ -263,10 +304,13 @@ class FirebaseApi {
     });
   }
 
-  static void sendVideo(Message videoMessage, String senderName, String senderImage) async {
+  static void sendVideo(
+      Message videoMessage, String senderName, String senderImage) async {
     final videoFileId = videoMessage.video!.hashCode + DateTime.now().hashCode;
 
-    final videoRef = FirebaseStorage.instance.ref().child('chats/${videoMessage.chatPath}/$videoFileId');
+    final videoRef = FirebaseStorage.instance
+        .ref()
+        .child('chats/${videoMessage.chatPath}/$videoFileId');
 
     await videoRef.putFile(File(videoMessage.video!)).whenComplete(() => null);
     final videoUrl = await videoRef.getDownloadURL();
@@ -282,9 +326,13 @@ class FirebaseApi {
     });
   }
 
-  static void sendAudio(Message audioMessage, String senderName, String senderImage) async {
+  static void sendAudio(
+      Message audioMessage, String senderName, String senderImage) async {
     final audioFileId = audioMessage.audio!.hashCode + DateTime.now().hashCode;
-    final audioRef = FirebaseStorage.instance.ref().child('chats/${audioMessage.chatPath}').child('$audioFileId');
+    final audioRef = FirebaseStorage.instance
+        .ref()
+        .child('chats/${audioMessage.chatPath}')
+        .child('$audioFileId');
 
     await audioRef.putFile(File(audioMessage.audio!)).whenComplete(() => null);
     final audioUrl = await audioRef.getDownloadURL();

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:voice_message_package/voice_message_package.dart';
 
-import '../helpers/message_bubble_settings.dart';
+import '../../../helpers/message_bubble_settings.dart';
 
 class AudioMessage extends StatelessWidget {
   const AudioMessage({

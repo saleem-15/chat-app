@@ -1,9 +1,9 @@
-import 'package:chat_app/widgets/chat_tile.dart';
+import 'package:chat_app/screens/user_chats/components/chat_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../controllers/controller.dart';
-import '../widgets/drawer.dart';
+import '../../../controllers/controller.dart';
+import '../components/drawer.dart';
 
 class UserChats extends StatelessWidget {
   const UserChats({super.key});
@@ -14,7 +14,12 @@ class UserChats extends StatelessWidget {
       drawer: const MyDrawer(),
       appBar: AppBar(
         title: const Text('Chats'),
-        actions: const [Icon(Icons.search)],
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.search),
+          )
+        ],
       ),
       body: GetBuilder<Controller>(
         builder: (controller) {

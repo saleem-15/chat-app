@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:chat_app/utils/utils.dart';
+import 'package:chat_app/helpers/utils.dart';
 import 'package:hive/hive.dart';
 
 import 'message.dart';

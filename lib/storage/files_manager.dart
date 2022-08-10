@@ -6,7 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
 
-import '../utils/utils.dart';
+import '../helpers/utils.dart';
 
 class FileManager {
   static final _instance = FileManager();

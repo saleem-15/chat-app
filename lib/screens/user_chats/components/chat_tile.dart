@@ -4,12 +4,12 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:chat_app/controllers/controller.dart';
-import 'package:chat_app/screens/chat_screen.dart';
+import 'package:chat_app/screens/chat/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
-import '../models/message_type.dart';
+import '../../../models/message_type.dart';
 
 class ChatTile extends StatelessWidget {
   ChatTile({
@@ -49,7 +49,12 @@ class ChatTile extends StatelessWidget {
 
         return ListTile(
           onTap: () {
-            Get.to(() => ChatScreen(chatPath: chatPath, image: image, name: name, userId: userId));
+            Get.to(
+              () => ChatScreen(chatPath: chatPath, image: image, name: name, userId: userId),
+              transition: Transition.fadeIn,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeIn,
+            );
           },
           leading: CircleAvatar(
             radius: 25,

@@ -2,14 +2,14 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:chat_app/controllers/controller.dart';
-import 'package:chat_app/widgets/video_message.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../utils/utils.dart';
+import '../../../helpers/utils.dart';
 import 'audio_message.dart';
 import 'image_message.dart';
 import 'message_bubble.dart';
+import 'video_message.dart';
 
 class Messages extends StatelessWidget {
   const Messages({required this.chatPath, super.key});

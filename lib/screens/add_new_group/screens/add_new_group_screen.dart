@@ -2,13 +2,13 @@
 
 import 'dart:io';
 
-import 'package:chat_app/screens/add_new_group_second_screen.dart';
+import 'package:chat_app/screens/add_new_group/screens/add_new_group_second_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
 
-import '../controllers/controller.dart';
-import '../models/chat.dart';
+import '../../../controllers/controller.dart';
+import '../../../models/chat.dart';
 
 class AddNewGroupScreen extends StatelessWidget {
   AddNewGroupScreen({super.key});
@@ -45,7 +45,9 @@ class AddNewGroupScreen extends StatelessWidget {
                 height: 3,
               ),
               Text(
-                selectedPeople.isNotEmpty ? '${selectedPeople.length} selected' : 'unlimited number of members',
+                selectedPeople.isNotEmpty
+                    ? '${selectedPeople.length} selected'
+                    : 'unlimited number of members',
                 style: const TextStyle(fontSize: 12),
               ),
             ],
@@ -53,7 +55,9 @@ class AddNewGroupScreen extends StatelessWidget {
         ),
         body: GetBuilder<Controller>(
           builder: (controller) {
-            contacts = controller.myChatsList.where((e) => e.value.isGroupChat == false).toList();
+            contacts = controller.myChatsList
+                .where((e) => e.value.isGroupChat == false)
+                .toList();
 
             return Column(
               children: [

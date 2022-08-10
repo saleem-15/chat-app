@@ -15,10 +15,10 @@ class Dao {
     // printChatBoxData();
   }
 
-  clearData() async {
-    await myBox.clear();
-    await chatsBox.clear();
-  }
+  // clearData() async {
+  //   await myBox.clear();
+  //   await chatsBox.clear();
+  // }
 
   static final _instance = Dao();
   static Dao get instance => _instance;

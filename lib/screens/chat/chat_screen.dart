@@ -2,16 +2,16 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:chat_app/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:chat_app/widgets/messages.dart';
 
-import '../controllers/controller.dart';
-import '../helpers/message_bubble_settings.dart';
-import '../widgets/chat_text_field.dart';
-import 'user_details_screen.dart';
+import '../../controllers/controller.dart';
+import '../../helpers/message_bubble_settings.dart';
+import '../../helpers/utils.dart';
+import '../user_details_screen.dart';
+import 'components/chat_text_field.dart';
+import 'components/messages.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
@@ -56,6 +56,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   name: widget.name,
                   image: widget.image,
                   chatPath: widget.chatPath,
+                  isGroup: isGroupChat,
                 ));
           },
           child: Row(

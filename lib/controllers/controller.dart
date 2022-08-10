@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:chat_app/api/firebase_api.dart';
 import 'package:chat_app/models/message.dart';
-import 'package:chat_app/utils/utils.dart';
+import 'package:chat_app/helpers/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -38,7 +38,7 @@ class Controller extends SuperController {
     myUser = await FirebaseApi.getUserData();
 
     //store the data in the database
-    setUserData(myUser);
+    await setUserData(myUser);
 
     await storeChatsInDatabase(chats);
 
@@ -54,7 +54,8 @@ class Controller extends SuperController {
     }
 
     //start sending to the server that I am online
-    timer = Timer.periodic(const Duration(minutes: 1), (timer) => sendToServerThatIamOnline());
+    timer = Timer.periodic(
+        const Duration(minutes: 1), (timer) => sendToServerThatIamOnline());
 
     update();
   }
@@ -81,7 +82,8 @@ class Controller extends SuperController {
     }
 
     //start sending to the server that u are online
-    timer = Timer.periodic(const Duration(minutes: 1), (timer) => sendToServerThatIamOnline());
+    timer = Timer.periodic(
+        const Duration(minutes: 1), (timer) => sendToServerThatIamOnline());
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> getMessagesFromBackend(String chatPath) {
@@ -145,32 +147,49 @@ class Controller extends SuperController {
     return messages;
   }
 
-  Future<Message> messageFromDocument(DocumentSnapshot<Map<String, dynamic>> msgDoc, String chatPath) async {
+  Future<Message> messageFromDocument(
+      DocumentSnapshot<Map<String, dynamic>> msgDoc, String chatPath) async {
     late final Message message;
 
     switch (msgDoc['type']) {
       case 'text':
-        message = Message(chatPath: chatPath, text: msgDoc['text'], senderId: msgDoc['senderId']);
+        message = Message(
+            chatPath: chatPath, text: msgDoc['text'], senderId: msgDoc['senderId']);
         break;
 
       case 'image':
-        final filePath = await FileManager.instance.saveFileFromNetwork(msgDoc['image'], chatPath);
+        final filePath =
+            await FileManager.instance.saveFileFromNetwork(msgDoc['image'], chatPath);
         final image = File(filePath);
-        message = Message.image(chatPath: chatPath, image: image.path, text: msgDoc['text'], senderId: msgDoc['senderId']);
+        message = Message.image(
+            chatPath: chatPath,
+            image: image.path,
+            text: msgDoc['text'],
+            senderId: msgDoc['senderId']);
         break;
 
       case 'video':
-        final filePath = await FileManager.instance.saveFileFromNetwork(msgDoc['video'], chatPath);
+        final filePath =
+            await FileManager.instance.saveFileFromNetwork(msgDoc['video'], chatPath);
         // log('video path: $filePath');
         final video = File(filePath);
-        message = Message.video(chatPath: chatPath, video: video.path, text: msgDoc['text'], senderId: msgDoc['senderId']);
+        message = Message.video(
+            chatPath: chatPath,
+            video: video.path,
+            text: msgDoc['text'],
+            senderId: msgDoc['senderId']);
         break;
 
       case 'audio':
-        final filePath = await FileManager.instance.saveFileFromNetwork(msgDoc['audio'], chatPath);
+        final filePath =
+            await FileManager.instance.saveFileFromNetwork(msgDoc['audio'], chatPath);
         // log('audio path: $filePath');
         final audioFile = File(filePath);
-        message = Message.audio(chatPath: chatPath, audio: audioFile.path, text: msgDoc['text'], senderId: msgDoc['senderId']);
+        message = Message.audio(
+            chatPath: chatPath,
+            audio: audioFile.path,
+            text: msgDoc['text'],
+            senderId: msgDoc['senderId']);
         break;
     }
 
@@ -178,14 +197,16 @@ class Controller extends SuperController {
   }
 
   void addMessage(Message message) {
-    final chat = myChatsList.firstWhere((chat) => chat.value.chatPath == message.chatPath);
+    final chat =
+        myChatsList.firstWhere((chat) => chat.value.chatPath == message.chatPath);
     chat.value.messages.add(message);
     update();
     db.addMessage(message);
   }
 
   void updateMessage(Message message) {
-    final chat = myChatsList.firstWhere((chat) => chat.value.chatPath == message.chatPath);
+    final chat =
+        myChatsList.firstWhere((chat) => chat.value.chatPath == message.chatPath);
     final indexOfMessageToBeUpdated = chat.value.messages.indexWhere((msg) {
       if (msg == message) {
         // log('Message updated Succesfully');
@@ -214,17 +235,22 @@ class Controller extends SuperController {
 
     user.chatId = Utils.getdocId(chatPath);
 
-    final chat = Chat(name: user.name, image: user.image, chatPath: chatPath, usersIds: [user.uid]);
+    final chat = Chat(
+        name: user.name, image: user.image, chatPath: chatPath, usersIds: [user.uid]);
 
-    final imageFilePath = await fileManager.saveFileFromNetwork(chat.image, chat.chatPath);
-
+    final imageFilePath =
+        await fileManager.saveFileFromNetwork(chat.image, chat.chatPath);
     chat.image = imageFilePath;
+
+    myChatsList.add(chat.obs);
     db.addChat(chat);
 
+    update();
     return;
   }
 
-  Future<void> createGroupChat(String groupName, List<String> membersIds, File image) async {
+  Future<void> createGroupChat(
+      String groupName, List<String> membersIds, File image) async {
     final imageId = Timestamp.now().toString();
 
     /// upload the group image
@@ -232,10 +258,12 @@ class Controller extends SuperController {
     await imageRef.putFile(image).whenComplete(() => null);
     final imageUrl = await imageRef.getDownloadURL();
 
-    final groupPath = await FirebaseApi.createGroupChat(groupName, [myUser.uid, ...membersIds], imageUrl);
+    final groupPath = await FirebaseApi.createGroupChat(
+        groupName, [myUser.uid, ...membersIds], imageUrl);
     final imageFilePath = await fileManager.saveFileFromNetwork(imageUrl, groupPath);
 
-    final chatGroup = Chat.group(name: groupName, image: imageFilePath, chatPath: groupPath, usersIds: membersIds);
+    final chatGroup = Chat.group(
+        name: groupName, image: imageFilePath, chatPath: groupPath, usersIds: membersIds);
     myChatsList.add(chatGroup.obs); //add to the list of chats
 
     update();
@@ -263,7 +291,8 @@ class Controller extends SuperController {
     }
     //printChatsData();
     // log('user id: $userID');
-    final chat = myChatsList.firstWhere((chat) => !chat.value.isGroupChat && chat.value.usersIds[0] == userID);
+    final chat = myChatsList.firstWhere(
+        (chat) => !chat.value.isGroupChat && chat.value.usersIds[0] == userID);
 
     final userData = chat.value;
     return MyUser(
@@ -306,7 +335,8 @@ class Controller extends SuperController {
 
   Future<void> storeChatsInDatabase(List<Chat> chats) async {
     for (var chat in chats) {
-      final imageFilePath = await fileManager.saveFileFromNetwork(chat.image, chat.chatPath);
+      final imageFilePath =
+          await fileManager.saveFileFromNetwork(chat.image, chat.chatPath);
 
       chat.image = imageFilePath;
       log('Controller => storeChatsInDatabase => image path: $imageFilePath');
@@ -327,7 +357,8 @@ class Controller extends SuperController {
     final difference = now.difference(lastOnline);
 
     if (now.day != lastOnline.day) {
-      final lastSeen = '${DateFormat('MMM d').format(lastOnline)} at ${DateFormat(' h:mm a').format(lastOnline)}';
+      final lastSeen =
+          '${DateFormat('MMM d').format(lastOnline)} at ${DateFormat(' h:mm a').format(lastOnline)}';
 
       return 'last seen $lastSeen';
     } else if (difference.inSeconds < 60) {
@@ -362,14 +393,15 @@ class Controller extends SuperController {
   @override
   void onResumed() {
 //start sending to the server that u are online
-    timer = Timer.periodic(const Duration(minutes: 1), (timer) => sendToServerThatIamOnline());
+    timer = Timer.periodic(
+        const Duration(minutes: 1), (timer) => sendToServerThatIamOnline());
   }
 
   List<MyUser> getGroupUsers(String groupId) {
-    List<MyUser> users = [];
-    final chat = myChatsList.firstWhere((chat) => chat.value.chatPath == groupId);
+    List<MyUser> users = [myUser]; // I am a member of the group
+    final groupChat = myChatsList.firstWhere((chat) => chat.value.chatPath == groupId);
 
-    for (var userId in chat.value.usersIds) {
+    for (var userId in groupChat.value.usersIds) {
       final user = getUserbyId(userId);
       users.add(user);
     }

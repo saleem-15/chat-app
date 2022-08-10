@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 
-import '../helpers/user_image_picker.dart';
-import '../models/chat.dart';
-import 'user_chats.dart';
+import '../../../helpers/user_image_picker.dart';
+import '../../../models/chat.dart';
+import '../../user_chats/screens/user_chats.dart';
 
 class AddNewGroup2ndScreen extends StatelessWidget {
   AddNewGroup2ndScreen({required this.selectedPeople, super.key});
